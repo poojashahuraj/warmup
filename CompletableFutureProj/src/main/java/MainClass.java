@@ -1,51 +1,65 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.CompletionHandler;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.nio.file.StandardOpenOption;
 
 public class MainClass {
-    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
-        MainClass mainClass = new MainClass();
-        mainClass.execute();
+    public static AsynchronousFileChannel channel;
+
+    public MainClass(AsynchronousFileChannel channel) {
+        this.channel = channel;
     }
 
-    private void execute() throws IOException, ExecutionException, InterruptedException {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
         Path path = Paths.get("/home/parallels/test.txt");
-        AsynchronousFileChannel asynchronousFileChannel = AsynchronousFileChannel.open(path,
-                StandardOpenOption.READ, StandardOpenOption.WRITE,
-                StandardOpenOption.CREATE);
+        MainClass m = new MainClass(channel);
+        m.AsyncFileIo(path);
+    }
 
-        CompletableFuture<Integer> completableFutureWrite = CompletableFuture.supplyAsync(() -> {
-/*here*/
-            Future<Integer> futureWrite = asynchronousFileChannel
-                    .write(ByteBuffer.wrap("Formation data System, Boulder".getBytes()), 0);
-            int wroteBytes = 0;
-            try {
-                wroteBytes = futureWrite.get();
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+    public void AsyncFileIo(Path path) throws IOException, ExecutionException, InterruptedException {
+        byte[] bytes = "Hello world".getBytes();
+        channel = AsynchronousFileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+        System.out.println("Number of bytes read are: " + read(0l).get());
+        System.out.println("Number of bytes written are: " + write(bytes, 0l).get());
+    }
+
+    public CompletableFuture<Integer> write(byte[] bytes, long position) throws ExecutionException, InterruptedException {
+        CompletableFuture cf = new CompletableFuture();
+        ByteBuffer bf = ByteBuffer.allocate(100);
+        channel.write(bf.wrap(bytes), position, null, new CompletionHandler<Integer, String>() {
+            @Override
+            public void completed(Integer result, String attachment) {
+                cf.complete(result);
             }
-            return wroteBytes;
-        });
-        CompletableFuture<Integer> completableFutureRead = completableFutureWrite.thenApplyAsync((r) -> {
-/*here*/
-            Future<Integer> futureRead = asynchronousFileChannel.read(byteBuffer, 0);
-            int readBytes = 0;
-            try {
-                readBytes = futureRead.get();
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+            @Override
+            public void failed(Throwable exc, String attachment) {
+                System.out.print("Failed to write");
             }
-            return readBytes;
         });
-        System.out.println("Bytes written in file: " + completableFutureWrite.get());
-        System.out.println("Bytes read from the file: " + completableFutureRead.get());
+        return cf;
+    }
+
+    public CompletableFuture<Integer> read(Long position) throws ExecutionException, InterruptedException {
+        ByteBuffer bf = ByteBuffer.allocate(100);
+        CompletableFuture cf = new CompletableFuture();
+        channel.read(bf, position, null,
+                new CompletionHandler<Integer, String>() {
+                    @Override
+                    public void completed(Integer result, String attachment) {
+                        cf.complete(result);
+                    }
+
+                    @Override
+                    public void failed(Throwable exc, String attachment) {
+                        System.out.println("Failed to read");
+                    }
+                }
+        );
+        return cf;
     }
 }
-
