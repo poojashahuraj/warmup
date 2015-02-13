@@ -1,7 +1,6 @@
 /**
  * Created by parallels on 2/12/15.
  */
-
 class LinkedList {
     public int size;
     protected Node start;
@@ -23,14 +22,19 @@ class LinkedList {
         list.append(1);
         list.append(0);
 
-        System.out.println("Size = " + list.getSize() + " \n");
+        System.out.println("Size of the list is: " + list.getSize());
+
         System.out.println("Before deleting any element");
         list.print();
-        list.remove(5);
+        list.remove(2);
         System.out.println("\nAfter deleting any element");
         list.print();
 
-
+        if(list.get(10) !=0){
+            System.out.println(list.get(10));
+        }else {
+            System.out.println("Key is not present is the map");
+        }
     }
 
 //First method
@@ -55,9 +59,7 @@ class LinkedList {
 //Third method
     public int get(int index) {
         Node current = start;
-        for(int i=0; i<=size; i++){
-            System.out.print("data for this index is:" + current.getValue() + "\t");
-            System.out.println("index is " + index + " Iteration for i " + i);
+        for(int i=0; i<size; i++){
             if(i == index){
                 System.out.println("came inside the if cond");
                 return current.getValue();
@@ -69,21 +71,21 @@ class LinkedList {
 
  //fourth method
     public void remove(int index) {
-        Node ptr = start;// so we are starting from node 2
+        Node ptr = start;
 
         for (int i = 0; i < size; i++) {
             if (i == index) {
-                Node p = ptr.getPrev(); // get previous node
-                Node n = ptr.getNext();// get next node
-                p.setNext(n);// middle node is gone hence prev node link will be set to next node
-                n.setPrev(p);// and for next node previous node link is set to previous node.
+                Node p = ptr.getPrev();
+                Node n = ptr.getNext();
+                p.setNext(n);
+                n.setPrev(p);
                 size--;
                 return;
             }
             ptr = ptr.getNext();
         }
-
     }
+
     public void print(){
         Node current = start;
         for(int i=0; i< size; i++){
