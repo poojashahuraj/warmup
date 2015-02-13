@@ -1,9 +1,9 @@
+package pooja;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Iterator;
 
-/**
- * Created by parallels on 2/13/15.
- */
 public class PersistentLinkedList {
     private final RandomAccessFile raf;
 
@@ -15,7 +15,6 @@ public class PersistentLinkedList {
         if (raf.length() == 0) {
             raf.writeInt(value);
             raf.writeInt(-1);
-            System.out.println(raf.length());
         } else {
             int currentPosition = 8;
             for (int i = 0; i < raf.length(); i++) {
@@ -44,7 +43,7 @@ public class PersistentLinkedList {
                 currentPosition = currentPosition + 8;
             }
         }
-        return 00;
+        throw new ArrayIndexOutOfBoundsException();
     }
 
     public int length() throws IOException {
@@ -63,5 +62,10 @@ public class PersistentLinkedList {
                 currentPosition = currentPosition + 8;
             }
         }
+    }
+
+    // TODO: implement me
+    public Iterator<Integer> iterator() {
+        return null;
     }
 }
