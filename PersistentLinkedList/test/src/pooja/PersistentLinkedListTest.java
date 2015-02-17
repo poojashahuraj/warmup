@@ -11,6 +11,7 @@ import java.io.RandomAccessFile;
 import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class PersistentLinkedListTest {
@@ -52,11 +53,14 @@ public class PersistentLinkedListTest {
     @Test
     public void testIterator() throws Exception {
         PersistentLinkedList pll = populate(10);
+        Iterator<Integer> iterator = pll.iterator();
+
         for (int i = 0; i < 10; i++) {
-            Iterator<Integer> iterator = pll.iterator(i);
             assertTrue(iterator.hasNext());
             assertEquals(i * 2, (int) iterator.next());
         }
+
+        assertFalse(iterator.hasNext());
     }
 
     private PersistentLinkedList populate(int howMany) throws Exception {

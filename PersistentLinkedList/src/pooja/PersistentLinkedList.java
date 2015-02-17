@@ -110,7 +110,7 @@ public class PersistentLinkedList {
     }
 
     // TODO: implement me
-    public Iterator<Integer> iterator(int i) {
+    public Iterator<Integer> iterator() {
 
         return new Iterator<Integer>() {
             PersistentLinkedList persistentLinkedList = new PersistentLinkedList(raf);
