@@ -61,34 +61,19 @@ public class PersistentLinkedList {
         throw new ArrayIndexOutOfBoundsException();
     }
 
-    public int getAddr(int index) throws IOException {
-        int currentPosition = 4;
-        for (int i = 0; i < raf.length(); i++) {
-            raf.seek(currentPosition);
-            int addr = raf.readInt();
-            if (i == index) {
-                return addr;
-            } else {
-                currentPosition = addr;
-            }
-        }
-        throw new ArrayIndexOutOfBoundsException();
-    }
-
-
     public int length() throws IOException {
         int currentPosition = 0;
         int numberOfNodes = 1;
-        for(int i = 0; i < raf.length(); i++) {
+        for (int i = 0; i < raf.length(); i++) {
             raf.seek(currentPosition);
             int value = raf.readInt();
             int addr = raf.readInt();
             if (addr == -1) {
                 return numberOfNodes;
             }
-                currentPosition = addr;
-                numberOfNodes = numberOfNodes + 1;
-             }
+            currentPosition = addr;
+            numberOfNodes = numberOfNodes + 1;
+        }
         throw new ArrayIndexOutOfBoundsException();
     }
 
@@ -104,39 +89,44 @@ public class PersistentLinkedList {
             } else {
                 raf.seek(currentPosition);
                 int address = raf.readInt();
-                currentPosition = address+4;
+                currentPosition = address + 4;
             }
         }
     }
 
-    // TODO: implement me
-    public Iterator<Integer> iterator() {
-
-        return new Iterator<Integer>() {
-            PersistentLinkedList persistentLinkedList = new PersistentLinkedList(raf);
-            boolean hasNext= false;
-            @Override
-            public boolean hasNext() {
-                try {
-                    int addr= persistentLinkedList.getAddr(i);
-                    if(addr == -1){hasNext= false;}
-                    else {hasNext= true;}
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            return hasNext;
-            }
-
-            @Override
-            public Integer next() {
-                int returnValue =0;
-                try {
-                     returnValue = persistentLinkedList.getValue(i);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-           return returnValue; }
-        };
+    public Iterator<Integer> iterator() throws IOException {
+        LinkedList linkedList = new LinkedList();
+        return linkedList;
     }
 
+    private class LinkedList implements Iterator<Integer> {
+        int currentPosition = 0;
+        int offset, address, value = 0;
+        boolean flag = false;
+
+        @Override
+        public boolean hasNext() {
+            try {
+                raf.seek(currentPosition);
+                value = raf.readInt();
+                address = raf.readInt();
+                if (address != -1 && offset < PersistentLinkedList.this.length()) {
+                    flag = true;
+                    offset++;
+                    currentPosition = address;
+                    return flag;
+                } else {
+                    flag = false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return flag;
+        }
+
+        @Override
+        public Integer next() {
+            return value;
+        }
+    }
 }

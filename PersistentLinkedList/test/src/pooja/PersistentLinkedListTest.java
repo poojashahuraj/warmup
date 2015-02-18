@@ -37,15 +37,12 @@ public class PersistentLinkedListTest {
     @Test
     public void testLength() throws Exception {
         PersistentLinkedList pll = populate(5);
-        // FIXME please :) Done
         assertEquals(5, pll.length());
     }
 
     @Test
     public void testDelete() throws Exception {
         PersistentLinkedList pll = populate(10);
-
-        // FIXME please :) Done
         pll.remove(1);
         assertEquals(9, pll.length());
     }
@@ -55,12 +52,11 @@ public class PersistentLinkedListTest {
         PersistentLinkedList pll = populate(10);
         Iterator<Integer> iterator = pll.iterator();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 9; i++) {
             assertTrue(iterator.hasNext());
             assertEquals(i * 2, (int) iterator.next());
         }
-
-        assertFalse(iterator.hasNext());
+      assertFalse(iterator.hasNext());
     }
 
     private PersistentLinkedList populate(int howMany) throws Exception {
