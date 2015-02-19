@@ -17,7 +17,7 @@ public class PersistentHashTable {
         raf = file;
     }
 
-    public void add(int key, int value) throws IOException {
+    public void put(int key, int value) throws IOException {
         int bucketNumber = key % hashInt;
         int startAddr = bucketNumber * 100;
         int endAddr = startAddr + 100;
@@ -48,7 +48,8 @@ public class PersistentHashTable {
     }
 
 
-    public int getValue(int key) throws IOException {
+    public int get
+            (int key) throws IOException {
         int bucketNumber = key % hashInt;
         int startAddr = bucketAddressTable.get(bucketNumber);
         int endAddr = startAddr + 100;
@@ -105,18 +106,17 @@ public class PersistentHashTable {
         }
     }
 
-    public Iterator<Integer> iterator(int key) throws IOException {
-        IteratorClass iteratorClass = new IteratorClass(key);
-        return iteratorClass;
+    public Iterator<Integer> bucket(int key) throws IOException {
+        return new BucketIterator(key);
     }
 
-    private class IteratorClass implements Iterator<Integer> {
+    private class BucketIterator implements Iterator<Integer> {
         int currentPos = 0;
         int offset, value, nextAddress = 0;
         boolean flag = false;
         private int key;
 
-        public IteratorClass(int i) {
+        public BucketIterator(int i) {
             key = i;
         }
 
