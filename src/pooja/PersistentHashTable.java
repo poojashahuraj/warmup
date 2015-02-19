@@ -8,8 +8,15 @@ import java.util.Iterator;
 /**
  * Created by parallels on 2/18/15.
  */
+
+// TODO:
+// - Use static positions, each bucket is a int that has the location to the first node of a linked list.  Empty: -1, otherwise: first node.
+// - Append new linked list nodes at the end of the file
+// - Pass bucket count as a constructor parameter
+// - No BucketAddressTable
+
 public class PersistentHashTable {
-    public static int hashInt = 5;
+    public static int BUCKET_COUNT = 5;
     private RandomAccessFile raf;
     private Hashtable<Integer, Integer> bucketAddressTable = new Hashtable<Integer, Integer>();
 
@@ -18,7 +25,7 @@ public class PersistentHashTable {
     }
 
     public void put(int key, int value) throws IOException {
-        int bucketNumber = key % hashInt;
+        int bucketNumber = key % BUCKET_COUNT;
         int startAddr = bucketNumber * 100;
         int endAddr = startAddr + 100;
         bucketAddressTable.put(bucketNumber, startAddr);
@@ -50,7 +57,7 @@ public class PersistentHashTable {
 
     public int get
             (int key) throws IOException {
-        int bucketNumber = key % hashInt;
+        int bucketNumber = key % BUCKET_COUNT;
         int startAddr = bucketAddressTable.get(bucketNumber);
         int endAddr = startAddr + 100;
         int currentPos = startAddr;
@@ -87,7 +94,7 @@ public class PersistentHashTable {
     }
 
     public void remove(int removeKey) throws IOException {
-        int bucketNumber = removeKey % hashInt;
+        int bucketNumber = removeKey % BUCKET_COUNT;
         int startAddr = bucketAddressTable.get(bucketNumber);
         int endAddr = startAddr + 100;
         int currentPos = startAddr;
@@ -123,7 +130,7 @@ public class PersistentHashTable {
         @Override
         public boolean hasNext() {
             try {
-                currentPos = bucketAddressTable.get(key % hashInt);
+                currentPos = bucketAddressTable.get(key % BUCKET_COUNT);
                 raf.seek(currentPos);
                 for (int i = 0; i < 10; i++) {
                     if (raf.readInt() == key) {
