@@ -5,8 +5,11 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by parallels on 2/18/15.
@@ -23,7 +26,6 @@ public class PersistentHashTableTest {
             pht.add(i, i * 11);
             assertEquals(i * 11, pht.getValue(i));
         }
-
     }
 
     @Test
@@ -33,16 +35,35 @@ public class PersistentHashTableTest {
             assertEquals(4, pht.getBucketLength(i));
         }
     }
+
     @Test
     public void testDelete() throws Exception {
         PersistentHashTable pht = populate(40);
-        for(int i=5 ;i<10;i++){
+        for (int i = 5; i < 10; i++) {
             pht.remove(i);
-            assertEquals(7, pht.getBucketLength(i%5));
+            assertEquals(7, pht.getBucketLength(i % 5));
         }
-        for(int i=15 ;i<20;i++){
+        for (int i = 15; i < 20; i++) {
             pht.remove(i);
-            assertEquals(6, pht.getBucketLength(i%5));
+            assertEquals(6, pht.getBucketLength(i % 5));
+        }
+    }
+
+    @Test
+    public void testIterator() throws Exception {
+        PersistentHashTable pht = populate(20);
+        for (int i = 0; i < 15; i++) {
+            Iterator<Integer> iterator = pht.iterator(i);
+            assertTrue(iterator.hasNext());
+        }
+        for (int i = 15; i < 20; i++) {
+            Iterator<Integer> iterator = pht.iterator(i);
+            assertFalse(iterator.hasNext());
+        }
+
+        for (int i = 0; i < 20; i++) {
+            Iterator<Integer> iterator = pht.iterator(i);
+            assertEquals(i, (int) iterator.next());
         }
     }
 

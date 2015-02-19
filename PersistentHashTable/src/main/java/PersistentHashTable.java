@@ -102,18 +102,56 @@ public class PersistentHashTable {
             }
         }
     }
-    public Iterator<Integer> iterator(int bucketNumber) throws IOException {
-        IteratorClass iteratorClass = new IteratorClass();
+
+    public Iterator<Integer> iterator(int key) throws IOException {
+        IteratorClass iteratorClass = new IteratorClass(key);
         return iteratorClass;
     }
+
     private class IteratorClass implements Iterator<Integer> {
+        int currentPos = 0;
+        int offset, value, nextAddress = 0;
+        boolean flag = false;
+        private int key;
+
+        public IteratorClass(int i) {
+            key = i;
+        }
+
         @Override
         public boolean hasNext() {
-            return false;
+            try {
+                currentPos = bucketAddressTable.get(key % hashInt);
+                raf.seek(currentPos);
+                for (int i = 0; i < 10; i++) {
+                    if (raf.readInt() == key) {
+                        raf.seek(currentPos);
+                        key = raf.readInt();
+                        value = raf.readInt();
+                        nextAddress = raf.readInt();
+                        break;
+                    } else {
+                        raf.seek(currentPos + 8);
+                        currentPos = raf.readInt();
+                    }
+                }
+                if (nextAddress != -1 && offset < PersistentHashTable.this.getBucketLength(key % 5)) {
+                    flag = true;
+                    offset++;
+                    currentPos = nextAddress;
+                    return flag;
+                } else {
+                    flag = false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return flag;
         }
+
         @Override
         public Integer next() {
-            return null;
+            return key;
         }
     }
 }
