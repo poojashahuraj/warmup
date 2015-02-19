@@ -1,16 +1,16 @@
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 /**
  * Created by parallels on 2/18/15.
  */
 public class PersistentHashTable {
+    public static int hashInt = 5;
     private RandomAccessFile raf;
     private Hashtable<Integer, Integer> bucketAddressTable = new Hashtable<Integer, Integer>();
-    public static int hashInt = 5;
 
-    //constructor
     public PersistentHashTable(RandomAccessFile file) {
         raf = file;
     }
@@ -27,12 +27,9 @@ public class PersistentHashTable {
             raf.writeInt(key);
             raf.writeInt(value);
             raf.writeInt(-1);
-
-        } else // second or later node in the bucket
-        {
+        } else {
             int currentPos = startAddr + 12;
             for (int i = currentPos; i < endAddr; i++) {
-                System.out.println("curr " + currentPos);
                 raf.seek(currentPos - 4);
                 if (raf.readInt() == -1) {
                     raf.seek(currentPos - 4);
@@ -52,25 +49,71 @@ public class PersistentHashTable {
     public int getValue(int key) throws IOException {
         int bucketNumber = key % hashInt;
         int startAddr = bucketAddressTable.get(bucketNumber);
-        int endAddr =startAddr+100;
-        int currentPos =startAddr;
-        for (int i=startAddr; i<endAddr; i++){
+        int endAddr = startAddr + 100;
+        int currentPos = startAddr;
+        for (int i = startAddr; i < endAddr; i++) {
             raf.seek(currentPos);
             int readKey = raf.readInt();
-            if(readKey == key){
+            if (readKey == key) {
                 return raf.readInt();
-            }else{
-                currentPos+=12;
+            } else {
+                currentPos += 12;
             }
         }
         throw new ArrayIndexOutOfBoundsException();
     }
 
 
-    public int getBucketLength() {
-        return 0;
+    public int getBucketLength(int bucketNumber) throws IOException {
+        int startAddr = bucketAddressTable.get(bucketNumber);
+        int endAddr = startAddr + 100;
+        int numberOfNodes = 1;
+        int currentPos = startAddr + 8;
+
+        for (int i = startAddr; i < endAddr; i++) {
+            raf.seek(currentPos);
+            int readKey = raf.readInt();
+            if (readKey == -1) {
+                break;
+            } else {
+                numberOfNodes++;
+                currentPos = readKey + 8;
+            }
+        }
+        return numberOfNodes;
     }
 
-    public void remove(int i) {
+    public void remove(int removeKey) throws IOException {
+        int bucketNumber = removeKey % hashInt;
+        int startAddr = bucketAddressTable.get(bucketNumber);
+        int endAddr = startAddr + 100;
+        int currentPos = startAddr;
+
+        for (int i = startAddr; i < endAddr; i++) {
+            raf.seek(currentPos);
+            int readKey = raf.readInt();
+            if (readKey == removeKey) {
+                raf.seek(currentPos + 8);
+                int nextAddr = raf.readInt();
+                raf.seek(currentPos - 4);
+                raf.writeInt(nextAddr);
+            } else {
+                currentPos += 12;
+            }
+        }
+    }
+    public Iterator<Integer> iterator(int bucketNumber) throws IOException {
+        IteratorClass iteratorClass = new IteratorClass();
+        return iteratorClass;
+    }
+    private class IteratorClass implements Iterator<Integer> {
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+        @Override
+        public Integer next() {
+            return null;
+        }
     }
 }

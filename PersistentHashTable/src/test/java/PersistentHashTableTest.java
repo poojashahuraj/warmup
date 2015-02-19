@@ -18,26 +18,33 @@ public class PersistentHashTableTest {
     private PersistentHashTable pht;
 
     @Test
-    public void testAppendAndGet() throws Exception {
+    public void testAddAndGet() throws Exception {
         for (int i = 0; i < 10; i++) {
             pht.add(i, i * 11);
-            assertEquals((i + 1) * 8, raf.length());
-            assertEquals(i * 2, pht.getValue(i));
+            assertEquals(i * 11, pht.getValue(i));
         }
 
-    }/*
-    @Test
-    public void testLength() throws Exception {
-        PersistentHashTable pht = populate(5);
-        assertEquals(5, pht.getBucketLength());
     }
 
     @Test
+    public void testLength() throws Exception {
+        PersistentHashTable pht = populate(20);
+        for (int i = 0; i < 5; i++) {
+            assertEquals(4, pht.getBucketLength(i));
+        }
+    }
+    @Test
     public void testDelete() throws Exception {
-        PersistentHashTable pht = populate(10);
-        pht.remove(1);
-        assertEquals(9, pht.getBucketLength());
-    }*/
+        PersistentHashTable pht = populate(40);
+        for(int i=5 ;i<10;i++){
+            pht.remove(i);
+            assertEquals(7, pht.getBucketLength(i%5));
+        }
+        for(int i=15 ;i<20;i++){
+            pht.remove(i);
+            assertEquals(6, pht.getBucketLength(i%5));
+        }
+    }
 
     private PersistentHashTable populate(int howMany) throws Exception {
         for (int i = 0; i < howMany; i++) {
