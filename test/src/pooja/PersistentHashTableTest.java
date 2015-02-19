@@ -1,3 +1,5 @@
+package pooja;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -7,9 +9,7 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.Iterator;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by parallels on 2/18/15.
