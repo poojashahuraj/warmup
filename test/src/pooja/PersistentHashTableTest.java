@@ -23,7 +23,17 @@ public class PersistentHashTableTest {
     private File file;
     private PersistentHashTable pht;
 
-    @Test // TODO: remove extra indirection
+    @Test // TODO: fix me please :)
+    public void testDifferentBucketSizes() throws Exception {
+        PersistentHashTable pht = new PersistentHashTable(raf, 10);
+        for (int i = 0; i < 20; i++) {
+            pht.put(i, i * 11);
+            assertEquals(i * 11, pht.get(i));
+        }
+        assertEquals(20, pht.size());
+    }
+
+    @Test
     public void testReopen() throws Exception {
         PersistentHashTable pht = populate(10);
         assertEquals(10, pht.size());

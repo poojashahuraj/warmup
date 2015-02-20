@@ -141,21 +141,15 @@ public class PersistentHashTable {
     }
 
     public int size() throws IOException {
-        int totalNumberOfNodes = 0;
-        int currentPos = 20;
-        for (int i = 20; i < endOfFileAddress; i++) {
-            raf.seek(currentPos);
-            if (raf.read() == -1) {
-                break;
+        int size = 0;
 
-            } else {
-                raf.seek(currentPos);
-                currentPos = currentPos + 12;
-                totalNumberOfNodes = totalNumberOfNodes + 1;
-            }
+        for (int i = 0; i < bucketCount; i++) {
+            size += getBucketLength(i);
         }
-        return totalNumberOfNodes;
+
+        return size;
     }
+
 
     private class BucketIterator implements Iterator<Integer> {
         int currentPos = 0;
