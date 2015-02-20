@@ -1,8 +1,4 @@
 package pooja;
-/**
- * Created by parallels on 2/19/15.
- */
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Iterator;
@@ -13,20 +9,20 @@ import java.util.Iterator;
 public class PersistentHashTable {
     private int bucketCount;
     private RandomAccessFile raf;
-    private int endOfFileAddress;
+    private int endOfFileAddress = 20;
 
     public PersistentHashTable(RandomAccessFile file, int bucket_count) throws IOException {
         raf = file;
         bucketCount = bucket_count;
-        init();
+        if (raf.length() == 0) {
+            init();
+        }
     }
 
     private void init() throws IOException {
-        int startAddr = 20;
         raf.seek(0);
         for (int i = 0; i < 5; i++) {
-            raf.writeInt(startAddr);
-            startAddr += 12;
+            raf.writeInt(-1);
         }
     }
 
@@ -34,24 +30,24 @@ public class PersistentHashTable {
     public void put(int key, int value) throws IOException {
         int bucketNumber = key % bucketCount;
         raf.seek(bucketNumber * 4);
-        int bucketStartAddr = raf.readInt();
+        int bucketStartPos = raf.readInt();
 
-        raf.seek(bucketStartAddr);
-        if (raf.read() == -1) {//bucket is empty first element
-            raf.seek(bucketStartAddr);
+        if (bucketStartPos == -1) { //bucket is empty
+            raf.seek(bucketNumber * 4);
+            raf.writeInt(endOfFileAddress);
+            raf.seek(endOfFileAddress);
             raf.writeInt(key);
             raf.writeInt(value);
             raf.writeInt(-1);
-            endOfFileAddress = 80;
-        } else {
-            int currentPos = bucketStartAddr;
+            endOfFileAddress = (int) raf.getFilePointer();
+        } else {//minimum one element is present
+            int currentPos = bucketStartPos;
 
-            for (int i = 0; i < 10; i++) {
+            for (int i = bucketStartPos; i < endOfFileAddress; i++) {
                 raf.seek(currentPos + 8);
-                if (raf.readInt() == -1) {//we reached the last element in the queue
+                if (raf.readInt() == -1) {//this is writing second node
                     raf.seek(currentPos + 8);
                     raf.writeInt(endOfFileAddress);
-
                     raf.seek(endOfFileAddress);
                     raf.writeInt(key);
                     raf.writeInt(value);
@@ -60,8 +56,7 @@ public class PersistentHashTable {
                     break;
                 } else {
                     raf.seek(currentPos + 8);
-                    int nextAddr = raf.readInt();
-                    currentPos = nextAddr;
+                    currentPos = raf.readInt();
                 }
             }
         }
@@ -73,15 +68,18 @@ public class PersistentHashTable {
         int bucketStartPos = raf.readInt();
         int currentPos = bucketStartPos;
 
-        for (int i = 0; i < 10; i++) {
-
-            raf.seek(currentPos);
-            if (raf.readInt() == key) {
-                return raf.readInt();
-            } else {
-                raf.seek(currentPos + 8);
-                int nextAddress = raf.readInt();
-                currentPos = nextAddress;
+        if (bucketStartPos == -1) {
+            return -1;
+        } else {
+            for (int i = 0; i < 10; i++) {
+                raf.seek(currentPos);
+                if (raf.readInt() == key) {
+                    return raf.readInt();
+                } else {
+                    raf.seek(currentPos + 8);
+                    int nextAddress = raf.readInt();
+                    currentPos = nextAddress;
+                }
             }
         }
         throw new ArrayIndexOutOfBoundsException();
@@ -142,8 +140,21 @@ public class PersistentHashTable {
         return new BucketIterator(key);
     }
 
-    public int size() {
-        return 0;
+    public int size() throws IOException {
+        int totalNumberOfNodes = 0;
+        int currentPos = 20;
+        for (int i = 20; i < endOfFileAddress; i++) {
+            raf.seek(currentPos);
+            if (raf.read() == -1) {
+                break;
+
+            } else {
+                raf.seek(currentPos);
+                currentPos = currentPos + 12;
+                totalNumberOfNodes = totalNumberOfNodes + 1;
+            }
+        }
+        return totalNumberOfNodes;
     }
 
     private class BucketIterator implements Iterator<Integer> {
