@@ -1,3 +1,4 @@
+package pooja;
 /**
  * Created by parallels on 2/19/15.
  */
@@ -139,6 +140,10 @@ public class PersistentHashTable {
 
     public Iterator<Integer> bucket(int key) throws IOException {
         return new BucketIterator(key);
+    }
+
+    public int size() {
+        return 0;
     }
 
     private class BucketIterator implements Iterator<Integer> {
