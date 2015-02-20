@@ -1,114 +1,138 @@
-package pooja;
+/**
+ * Created by parallels on 2/19/15.
+ */
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Hashtable;
 import java.util.Iterator;
 
 /**
  * Created by parallels on 2/18/15.
  */
-
-// TODO:
-// - Use static positions, each bucket is a int that has the location to the first node of a linked list.  Empty: -1, otherwise: first node.
-// - Append new linked list nodes at the end of the file
-// - Pass bucket count as a constructor parameter
-// - No BucketAddressTable
-
 public class PersistentHashTable {
-    public static int BUCKET_COUNT = 5;
+    private int bucketCount;
     private RandomAccessFile raf;
-    private Hashtable<Integer, Integer> bucketAddressTable = new Hashtable<Integer, Integer>();
+    private int endOfFileAddress;
 
-    public PersistentHashTable(RandomAccessFile file) {
+    public PersistentHashTable(RandomAccessFile file, int bucket_count) throws IOException {
         raf = file;
+        bucketCount = bucket_count;
+        init();
     }
 
-    public void put(int key, int value) throws IOException {
-        int bucketNumber = key % BUCKET_COUNT;
-        int startAddr = bucketNumber * 100;
-        int endAddr = startAddr + 100;
-        bucketAddressTable.put(bucketNumber, startAddr);
+    private void init() throws IOException {
+        int startAddr = 20;
+        raf.seek(0);
+        for (int i = 0; i < 5; i++) {
+            raf.writeInt(startAddr);
+            startAddr += 12;
+        }
+    }
 
-        raf.seek(startAddr);
-        if (raf.read() == -1) {
-            raf.seek(startAddr);
+
+    public void put(int key, int value) throws IOException {
+        int bucketNumber = key % bucketCount;
+        raf.seek(bucketNumber * 4);
+        int bucketStartAddr = raf.readInt();
+
+        raf.seek(bucketStartAddr);
+        if (raf.read() == -1) {//bucket is empty first element
+            raf.seek(bucketStartAddr);
             raf.writeInt(key);
             raf.writeInt(value);
             raf.writeInt(-1);
+            endOfFileAddress = 80;
         } else {
-            int currentPos = startAddr + 12;
-            for (int i = currentPos; i < endAddr; i++) {
-                raf.seek(currentPos - 4);
-                if (raf.readInt() == -1) {
-                    raf.seek(currentPos - 4);
-                    raf.writeInt(currentPos);
+            int currentPos = bucketStartAddr;
+
+            for (int i = 0; i < 10; i++) {
+                raf.seek(currentPos + 8);
+                if (raf.readInt() == -1) {//we reached the last element in the queue
+                    raf.seek(currentPos + 8);
+                    raf.writeInt(endOfFileAddress);
+
+                    raf.seek(endOfFileAddress);
                     raf.writeInt(key);
                     raf.writeInt(value);
                     raf.writeInt(-1);
+                    endOfFileAddress = (int) raf.getFilePointer();
                     break;
                 } else {
-                    currentPos += 12;
+                    raf.seek(currentPos + 8);
+                    int nextAddr = raf.readInt();
+                    currentPos = nextAddr;
                 }
             }
         }
     }
 
+    public int get(int key) throws IOException {
+        int bucketNumber = key % bucketCount;
+        raf.seek(bucketNumber * 4);
+        int bucketStartPos = raf.readInt();
+        int currentPos = bucketStartPos;
 
-    public int get
-            (int key) throws IOException {
-        int bucketNumber = key % BUCKET_COUNT;
-        int startAddr = bucketAddressTable.get(bucketNumber);
-        int endAddr = startAddr + 100;
-        int currentPos = startAddr;
-        for (int i = startAddr; i < endAddr; i++) {
+        for (int i = 0; i < 10; i++) {
+
             raf.seek(currentPos);
-            int readKey = raf.readInt();
-            if (readKey == key) {
+            if (raf.readInt() == key) {
                 return raf.readInt();
             } else {
-                currentPos += 12;
+                raf.seek(currentPos + 8);
+                int nextAddress = raf.readInt();
+                currentPos = nextAddress;
             }
         }
         throw new ArrayIndexOutOfBoundsException();
     }
 
-
-    public int getBucketLength(int bucketNumber) throws IOException {
-        int startAddr = bucketAddressTable.get(bucketNumber);
-        int endAddr = startAddr + 100;
+    public int getBucketLength(int key) throws IOException {
+        int bucketNumber = key % bucketCount;
+        raf.seek(bucketNumber * 4);
+        int bucketStartPos = raf.readInt();
+        int currentPosition = bucketStartPos;
         int numberOfNodes = 1;
-        int currentPos = startAddr + 8;
 
-        for (int i = startAddr; i < endAddr; i++) {
-            raf.seek(currentPos);
-            int readKey = raf.readInt();
-            if (readKey == -1) {
-                break;
+        for (int i = 0; i < 10; i++) {
+            raf.seek(currentPosition);
+            if (raf.read() == -1) { //empty bucket
+                return 0;
             } else {
-                numberOfNodes++;
-                currentPos = readKey + 8;
+                raf.seek(currentPosition + 8);
+                if (raf.readInt() == -1) {
+                    return numberOfNodes;
+                } else {
+                    numberOfNodes++;
+                    raf.seek(currentPosition + 8);
+                    int nextAddress = raf.readInt();
+                    currentPosition = nextAddress;
+                }
             }
         }
         return numberOfNodes;
     }
 
     public void remove(int removeKey) throws IOException {
-        int bucketNumber = removeKey % BUCKET_COUNT;
-        int startAddr = bucketAddressTable.get(bucketNumber);
-        int endAddr = startAddr + 100;
-        int currentPos = startAddr;
+        int bucketNumber = removeKey % bucketCount;
+        raf.seek(bucketNumber * 4);
+        int bucketStartPos = raf.readInt();
 
-        for (int i = startAddr; i < endAddr; i++) {
-            raf.seek(currentPos);
-            int readKey = raf.readInt();
-            if (readKey == removeKey) {
-                raf.seek(currentPos + 8);
-                int nextAddr = raf.readInt();
-                raf.seek(currentPos - 4);
-                raf.writeInt(nextAddr);
+        int currentPosition = bucketStartPos;
+        int previousNodePos = bucketStartPos;
+        raf.seek(bucketStartPos + 8);
+        int nextNodePos = raf.readInt();
+
+        for (int i = 0; i < 10; i++) {
+            raf.seek(currentPosition);
+            if (raf.readInt() == removeKey) {
+                raf.seek(previousNodePos + 8);
+                raf.writeInt(nextNodePos);
             } else {
-                currentPos += 12;
+                raf.seek(currentPosition);
+                previousNodePos = (int) raf.getFilePointer();
+                currentPosition = nextNodePos;
+                raf.seek(currentPosition + 8);
+                nextNodePos = raf.readInt();
             }
         }
     }
@@ -130,9 +154,14 @@ public class PersistentHashTable {
         @Override
         public boolean hasNext() {
             try {
-                currentPos = bucketAddressTable.get(key % BUCKET_COUNT);
-                raf.seek(currentPos);
+                int bucketNumber = key % bucketCount;
+                raf.seek(bucketNumber * 4);
+                int bucketStartAddr = raf.readInt();
+                currentPos = bucketStartAddr;
+
+
                 for (int i = 0; i < 10; i++) {
+                    raf.seek(currentPos);
                     if (raf.readInt() == key) {
                         raf.seek(currentPos);
                         key = raf.readInt();
@@ -141,7 +170,13 @@ public class PersistentHashTable {
                         break;
                     } else {
                         raf.seek(currentPos + 8);
-                        currentPos = raf.readInt();
+                        if (raf.read() == -1) {
+                            flag = false;
+                            break;
+                        } else {
+                            raf.seek(currentPos + 8);
+                            currentPos = raf.readInt();
+                        }
                     }
                 }
                 if (nextAddress != -1 && offset < PersistentHashTable.this.getBucketLength(key % 5)) {

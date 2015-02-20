@@ -1,4 +1,6 @@
-package pooja;
+/**
+ * Created by parallels on 2/19/15.
+ */
 
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -24,15 +26,8 @@ public class PersistentLinkedListTest {
             assertEquals((i + 1) * 8, raf.length());
             assertEquals(i * 2, pll.getValue(i));
         }
-
     }
 
-    /*        @Test(expected = ArrayIndexOutOfBoundsException.class)
-            public void testOutOfBounds() throws Exception {
-                PersistentLinkedList pll = populate(20);
-                pll.getValue(200);
-            }
-    */
     @Test
     public void testLength() throws Exception {
         PersistentLinkedList pll = populate(5);
@@ -50,7 +45,6 @@ public class PersistentLinkedListTest {
     public void testIterator() throws Exception {
         PersistentLinkedList pll = populate(10);
         Iterator<Integer> iterator = pll.iterator();
-
         for (int i = 0; i < 9; i++) {
             assertTrue(iterator.hasNext());
             assertEquals(i * 2, (int) iterator.next());
