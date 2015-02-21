@@ -1,4 +1,3 @@
-package pooja;
 
 /**
  * Created by parallels on 2/19/15.
@@ -18,14 +17,13 @@ import static org.junit.Assert.*;
  * Created by parallels on 2/18/15.
  */
 public class PersistentHashTableTest {
-    public static final int BUCKET_COUNT = 5;
     private RandomAccessFile raf;
     private File file;
-    private PersistentHashTable pht;
 
-    @Test // TODO: fix me please :)
+    @Test
     public void testDifferentBucketSizes() throws Exception {
-        PersistentHashTable pht = new PersistentHashTable(raf, 10);
+        int bucketCount =10;
+        PersistentHashTable pht = new PersistentHashTable(raf, bucketCount);
         for (int i = 0; i < 20; i++) {
             pht.put(i, i * 11);
             assertEquals(i * 11, pht.get(i));
@@ -39,12 +37,13 @@ public class PersistentHashTableTest {
         assertEquals(10, pht.size());
         raf.close();
         raf = new RandomAccessFile(file, "rwd");
-        pht = new PersistentHashTable(raf, BUCKET_COUNT);
+        pht = new PersistentHashTable(raf, 5);
         assertEquals(10, pht.size());
     }
 
     @Test
     public void testPutAndGet() throws Exception {
+        PersistentHashTable pht = populate(50);
         for (int i = 0; i < 40; i++) {
             pht.put(i, i*11);
             assertEquals(i*11, pht.get(i));
@@ -90,6 +89,7 @@ public class PersistentHashTableTest {
     }
 
     private PersistentHashTable populate(int howMany) throws Exception {
+        PersistentHashTable  pht = new PersistentHashTable(raf, 5);
         for (int i = 0; i < howMany; i++) {
             pht.put(i, i * 11);
         }
@@ -101,7 +101,6 @@ public class PersistentHashTableTest {
         file = File.createTempFile("foo", "bar");
         FileUtils.forceDelete(file);
         raf = new RandomAccessFile(file, "rwd");
-        pht = new PersistentHashTable(raf, BUCKET_COUNT);
     }
 
     @After

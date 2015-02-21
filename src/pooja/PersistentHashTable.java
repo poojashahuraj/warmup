@@ -1,4 +1,3 @@
-package pooja;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Iterator;
@@ -9,11 +8,12 @@ import java.util.Iterator;
 public class PersistentHashTable {
     private int bucketCount;
     private RandomAccessFile raf;
-    private int endOfFileAddress = 20;
+    private int endOfFileAddress;
 
-    public PersistentHashTable(RandomAccessFile file, int bucket_count) throws IOException {
+    public PersistentHashTable(RandomAccessFile file, int count) throws IOException {
         raf = file;
-        bucketCount = bucket_count;
+        endOfFileAddress = count*4;
+        bucketCount = count;
         if (raf.length() == 0) {
             init();
         }
@@ -21,18 +21,17 @@ public class PersistentHashTable {
 
     private void init() throws IOException {
         raf.seek(0);
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < bucketCount; i++) {
             raf.writeInt(-1);
         }
     }
-
 
     public void put(int key, int value) throws IOException {
         int bucketNumber = key % bucketCount;
         raf.seek(bucketNumber * 4);
         int bucketStartPos = raf.readInt();
 
-        if (bucketStartPos == -1) { //bucket is empty
+        if (bucketStartPos == -1) {
             raf.seek(bucketNumber * 4);
             raf.writeInt(endOfFileAddress);
             raf.seek(endOfFileAddress);
@@ -42,7 +41,6 @@ public class PersistentHashTable {
             endOfFileAddress = (int) raf.getFilePointer();
         } else {//minimum one element is present
             int currentPos = bucketStartPos;
-
             for (int i = bucketStartPos; i < endOfFileAddress; i++) {
                 raf.seek(currentPos + 8);
                 if (raf.readInt() == -1) {//this is writing second node
@@ -67,7 +65,6 @@ public class PersistentHashTable {
         raf.seek(bucketNumber * 4);
         int bucketStartPos = raf.readInt();
         int currentPos = bucketStartPos;
-
         if (bucketStartPos == -1) {
             return -1;
         } else {
@@ -84,7 +81,6 @@ public class PersistentHashTable {
         }
         throw new ArrayIndexOutOfBoundsException();
     }
-
     public int getBucketLength(int key) throws IOException {
         int bucketNumber = key % bucketCount;
         raf.seek(bucketNumber * 4);
@@ -94,7 +90,7 @@ public class PersistentHashTable {
 
         for (int i = 0; i < 10; i++) {
             raf.seek(currentPosition);
-            if (raf.read() == -1) { //empty bucket
+            if (raf.read() == -1) {
                 return 0;
             } else {
                 raf.seek(currentPosition + 8);
@@ -142,11 +138,9 @@ public class PersistentHashTable {
 
     public int size() throws IOException {
         int size = 0;
-
         for (int i = 0; i < bucketCount; i++) {
             size += getBucketLength(i);
         }
-
         return size;
     }
 
@@ -202,7 +196,6 @@ public class PersistentHashTable {
             }
             return flag;
         }
-
         @Override
         public Integer next() {
             return key;
