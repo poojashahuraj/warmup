@@ -1,4 +1,4 @@
-
+package pooja;
 /**
  * Created by parallels on 2/19/15.
  */
@@ -13,6 +13,7 @@ import java.io.RandomAccessFile;
 import java.util.Iterator;
 
 import static org.junit.Assert.*;
+
 /**
  * Created by parallels on 2/18/15.
  */
@@ -22,7 +23,7 @@ public class PersistentHashTableTest {
 
     @Test
     public void testDifferentBucketSizes() throws Exception {
-        int bucketCount =10;
+        int bucketCount = 10;
         PersistentHashTable pht = new PersistentHashTable(raf, bucketCount);
         for (int i = 0; i < 20; i++) {
             pht.put(i, i * 11);
@@ -45,8 +46,8 @@ public class PersistentHashTableTest {
     public void testPutAndGet() throws Exception {
         PersistentHashTable pht = populate(50);
         for (int i = 0; i < 40; i++) {
-            pht.put(i, i*11);
-            assertEquals(i*11, pht.get(i));
+            pht.put(i, i * 11);
+            assertEquals(i * 11, pht.get(i));
         }
     }
 
@@ -89,7 +90,7 @@ public class PersistentHashTableTest {
     }
 
     private PersistentHashTable populate(int howMany) throws Exception {
-        PersistentHashTable  pht = new PersistentHashTable(raf, 5);
+        PersistentHashTable pht = new PersistentHashTable(raf, 5);
         for (int i = 0; i < howMany; i++) {
             pht.put(i, i * 11);
         }
@@ -107,4 +108,12 @@ public class PersistentHashTableTest {
     public void tearDown() throws Exception {
         FileUtils.forceDelete(file);
     }
+
+    // TODO:
+    // - Make PHTT fast -  2 options:
+    //   A/ Encapsulate RandomAccesFile behind an API of your design, provide a bridge to use the actual RAF, provide a memory implementation for the test
+    //   B/ Extend/override RandomAccessFile behavior
+    // - Research async file and socket IO APIs available in the JDK
+    // - Write 2 paragraphs describing how you're going to implement async IO for your linked list (how your async IO operations will be sequenced).
+
 }
