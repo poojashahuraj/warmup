@@ -1,21 +1,21 @@
 package pooja;
-/**
- * Created by parallels on 2/19/15.
- */
-
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Iterator;
 
-import static org.junit.Assert.*;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
- * Created by parallels on 2/18/15.
+ * Created by parallels on 2/23/15.
  */
 public class PersistentHashTableTest {
     private RandomAccessFile raf;
@@ -89,7 +89,7 @@ public class PersistentHashTableTest {
         }
     }
 
-    private PersistentHashTable populate(int howMany) throws Exception {
+    public PersistentHashTable populate(int howMany) throws Exception {
         PersistentHashTable pht = new PersistentHashTable(raf, 5);
         for (int i = 0; i < howMany; i++) {
             pht.put(i, i * 11);
@@ -101,19 +101,127 @@ public class PersistentHashTableTest {
     public void setUp() throws Exception {
         file = File.createTempFile("foo", "bar");
         FileUtils.forceDelete(file);
-        raf = new RandomAccessFile(file, "rwd");
+        raf = new fancypht(file, "rwd") {
+            public int read() throws IOException {
+                return super.read();
+            }
+
+            @Override
+            public int read(byte[] b, int off, int len) throws IOException {
+                return super.read(b, off, len);
+            }
+
+            @Override
+            public int read(byte[] b) throws IOException {
+                return super.read(b);
+            }
+
+            @Override
+            public int skipBytes(int n) throws IOException {
+                return super.skipBytes(n);
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+                super.write(b);
+            }
+
+            @Override
+            public void write(byte[] b) throws IOException {
+                super.write(b);
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+                super.write(b, off, len);
+            }
+
+            @Override
+            public long getFilePointer() throws IOException {
+                return super.getFilePointer();
+            }
+
+            @Override
+            public void seek(long pos) throws IOException {
+                super.seek(pos);
+            }
+
+            @Override
+            public long length() throws IOException {
+                return super.length();
+            }
+
+            @Override
+            public void setLength(long newLength) throws IOException {
+                super.setLength(newLength);
+            }
+
+            @Override
+            public void close() throws IOException {
+                super.close();
+            }
+        };
+
     }
 
     @After
     public void tearDown() throws Exception {
         FileUtils.forceDelete(file);
     }
-
-    // TODO:
-    // - Make PHTT fast -  2 options:
-    //   A/ Encapsulate RandomAccesFile behind an API of your design, provide a bridge to use the actual RAF, provide a memory implementation for the test
-    //   B/ Extend/override RandomAccessFile behavior
-    // - Research async file and socket IO APIs available in the JDK
-    // - Write 2 paragraphs describing how you're going to implement async IO for your linked list (how your async IO operations will be sequenced).
-
+}
+class fancypht extends RandomAccessFile {
+    public fancypht(File file, String mode) throws FileNotFoundException {
+        super(file, mode);
+    }
+    public fancypht(String name, String mode) throws FileNotFoundException {
+        super(name, mode);
+    }
+    @Override
+    public int read() throws IOException {
+        return super.read();
+    }
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        return super.read(b, off, len);
+    }
+    @Override
+    public int read(byte[] b) throws IOException {
+        return super.read(b);
+    }
+    @Override
+    public int skipBytes(int n) throws IOException {
+        return super.skipBytes(n);
+    }
+    @Override
+    public void write(int b) throws IOException {
+        super.write(b);
+    }
+    @Override
+    public void write(byte[] b) throws IOException {
+        super.write(b);
+    }
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        super.write(b, off, len);
+    }
+    @Override
+    public long getFilePointer() throws IOException {
+        return super.getFilePointer();
+    }
+    @Override
+    public void seek(long pos) throws IOException {
+        super.seek(pos);
+    }
+    @Override
+    public long length() throws IOException {
+        return super.length();
+    }
+    @Override
+    public void setLength(long newLength) throws IOException {
+        super.setLength(newLength);
+    }
+    @Override
+    public void close() throws IOException {
+        super.close();
+    }
 }
