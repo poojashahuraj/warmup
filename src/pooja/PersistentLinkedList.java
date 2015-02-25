@@ -1,8 +1,4 @@
 package pooja;
-/**
- * Created by parallels on 2/19/15.
- */
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Iterator;

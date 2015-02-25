@@ -1,5 +1,4 @@
 package pooja;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,12 +13,11 @@ import static org.junit.Assert.assertFalse;
  * Created by parallels on 2/23/15.
  */
 public class PersistentHashTableTest {
-    private StorageAcessor storageAcessor;
-
+    private storageaccessor storageAccessor;
     @Test
     public void testDifferentBucketSizes() throws Exception {
         int bucketCount = 10;
-        PersistentHashTable pht = new PersistentHashTable(storageAcessor, bucketCount);
+        PersistentHashTable pht = new PersistentHashTable(storageAccessor, bucketCount);
         for (int i = 0; i < 20; i++) {
             pht.put(i, i * 11);
             assertEquals(i * 11, pht.get(i));
@@ -31,8 +29,8 @@ public class PersistentHashTableTest {
     public void testReopen() throws Exception {
         PersistentHashTable pht = populate(10, 5);
         assertEquals(10, pht.size());
-        storageAcessor.close();
-        pht = new PersistentHashTable(storageAcessor, 5);
+        storageAccessor.close();
+        pht = new PersistentHashTable(storageAccessor, 5);
         assertEquals(10, pht.size());
     }
 
@@ -47,15 +45,15 @@ public class PersistentHashTableTest {
 
     @Test
     public void testLength() throws Exception {
-        PersistentHashTable pht = populate(50, 5);
+        PersistentHashTable pht = populate(40, 5);
         for (int i = 0; i < 5; i++) {
-            assertEquals(10, pht.getBucketLength(i));
+            assertEquals(8, pht.getBucketLength(i));
         }
     }
 
-    @Test // TODO: fixme :)
+    @Test //
     public void testDelete() throws Exception {
-        PersistentHashTable pht = populate(40, 7);
+        PersistentHashTable pht = populate(40, 5);
         for (int i = 5; i < 10; i++) {
             pht.remove(i);
             assertEquals(7, pht.getBucketLength(i % 5));
@@ -83,8 +81,8 @@ public class PersistentHashTableTest {
         }
     }
 
-    public PersistentHashTable populate(int howMany, int bucketSize) throws Exception {
-        PersistentHashTable pht = new PersistentHashTable(storageAcessor, bucketSize);
+    public PersistentHashTable populate(int howMany, int bucketCount) throws Exception {
+        PersistentHashTable pht = new PersistentHashTable(storageAccessor, bucketCount);
         for (int i = 0; i < howMany; i++) {
             pht.put(i, i * 11);
         }
@@ -93,7 +91,7 @@ public class PersistentHashTableTest {
 
     @Before
     public void setUp() throws Exception {
-        storageAcessor = new MemoryAccessor();
+        storageAccessor = new MemoryAccessor();
     }
 
     @After

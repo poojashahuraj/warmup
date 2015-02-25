@@ -1,58 +1,58 @@
 package pooja;
-
 import java.io.IOException;
 import java.util.Iterator;
 
 public class PersistentHashTable {
     private int bucketCount;
     private int endOfFileAddress;
-    private StorageAcessor storageAcessor;
+    private storageaccessor storageAccessor;
 
-    public PersistentHashTable(StorageAcessor storageAcessor, int count) throws IOException {
-        this.storageAcessor = storageAcessor;
+    public PersistentHashTable(storageaccessor storageAccessor, int count) throws IOException {
+        this.storageAccessor = storageAccessor;
         endOfFileAddress = count * 4;
         bucketCount = count;
-        if (storageAcessor.length() == 0) {
+        if (storageAccessor.length() == 0) {
             init();
         }
     }
 
     private void init() throws IOException {
-        storageAcessor.seek(0);
+        storageAccessor.seek(0);
         for (int i = 0; i < bucketCount; i++) {
-            storageAcessor.writeInt(-1);
+            storageAccessor.writeInt(-1);
         }
     }
 
     public void put(int key, int value) throws IOException {
         int bucketNumber = key % bucketCount;
-        storageAcessor.seek(bucketNumber * 4);
-        int bucketStartPos = storageAcessor.readInt();
+        storageAccessor.seek(bucketNumber * 4);
+        int bucketStartPos = storageAccessor.readInt();
 
         if (bucketStartPos == -1) {
-            storageAcessor.seek(bucketNumber * 4);
-            storageAcessor.writeInt(endOfFileAddress);
-            storageAcessor.seek(endOfFileAddress);
-            storageAcessor.writeInt(key);
-            storageAcessor.writeInt(value);
-            storageAcessor.writeInt(-1);
-            endOfFileAddress = (int) storageAcessor.length();
+            storageAccessor.seek(bucketNumber * 4);
+            storageAccessor.writeInt(endOfFileAddress);
+            storageAccessor.seek(endOfFileAddress);
+            storageAccessor.writeInt(key);
+            storageAccessor.writeInt(value);
+            storageAccessor.writeInt(-1);
+            endOfFileAddress = (int) storageAccessor.length();
+
         } else {//minimum one element is present
             int currentPos = bucketStartPos;
             for (int i = bucketStartPos; i < endOfFileAddress; i++) {
-                storageAcessor.seek(currentPos + 8);
-                if (storageAcessor.readInt() == -1) {//this is writing second node
-                    storageAcessor.seek(currentPos + 8);
-                    storageAcessor.writeInt(endOfFileAddress);
-                    storageAcessor.seek(endOfFileAddress);
-                    storageAcessor.writeInt(key);
-                    storageAcessor.writeInt(value);
-                    storageAcessor.writeInt(-1);
-                    endOfFileAddress = (int) storageAcessor.length();
+                storageAccessor.seek(currentPos + 8);
+                if (storageAccessor.readInt() == -1) {//this is writing second node
+                    storageAccessor.seek(currentPos + 8);
+                    storageAccessor.writeInt(endOfFileAddress);
+                    storageAccessor.seek(endOfFileAddress);
+                    storageAccessor.writeInt(key);
+                    storageAccessor.writeInt(value);
+                    storageAccessor.writeInt(-1);
+                    endOfFileAddress = (int) storageAccessor.length();
                     break;
                 } else {
-                    storageAcessor.seek(currentPos + 8);
-                    currentPos = storageAcessor.readInt();
+                    storageAccessor.seek(currentPos + 8);
+                    currentPos = storageAccessor.readInt();
                 }
             }
         }
@@ -60,19 +60,19 @@ public class PersistentHashTable {
 
     public int get(int key) throws IOException {
         int bucketNumber = key % bucketCount;
-        storageAcessor.seek(bucketNumber * 4);
-        int bucketStartPos = storageAcessor.readInt();
+        storageAccessor.seek(bucketNumber * 4);
+        int bucketStartPos = storageAccessor.readInt();
         int currentPos = bucketStartPos;
         if (bucketStartPos == -1) {
             return -1;
         } else {
             for (int i = 0; i < 10; i++) {
-                storageAcessor.seek(currentPos);
-                if (storageAcessor.readInt() == key) {
-                    return storageAcessor.readInt();
+                storageAccessor.seek(currentPos);
+                if (storageAccessor.readInt() == key) {
+                    return storageAccessor.readInt();
                 } else {
-                    storageAcessor.seek(currentPos + 8);
-                    int nextAddress = storageAcessor.readInt();
+                    storageAccessor.seek(currentPos + 8);
+                    int nextAddress = storageAccessor.readInt();
                     currentPos = nextAddress;
                 }
             }
@@ -82,23 +82,24 @@ public class PersistentHashTable {
 
     public int getBucketLength(int key) throws IOException {
         int bucketNumber = key % bucketCount;
-        storageAcessor.seek(bucketNumber * 4);
-        int bucketStartPos = storageAcessor.readInt();
+        storageAccessor.seek(bucketNumber * 4);
+        int bucketStartPos = storageAccessor.readInt();
         int currentPosition = bucketStartPos;
         int numberOfNodes = 1;
 
         for (int i = 0; i < 10; i++) {
-            storageAcessor.seek(currentPosition);
-            if (storageAcessor.read() == -1) {
+            storageAccessor.seek(currentPosition);
+            if (storageAccessor.read() == -1) {
                 return 0;
             } else {
-                storageAcessor.seek(currentPosition + 8);
-                if (storageAcessor.readInt() == -1) {
+                storageAccessor.seek(currentPosition + 8);
+                int addr = storageAccessor.readInt();
+                if (addr == -1) {
                     return numberOfNodes;
                 } else {
                     numberOfNodes++;
-                    storageAcessor.seek(currentPosition + 8);
-                    int nextAddress = storageAcessor.readInt();
+                    storageAccessor.seek(currentPosition + 8);
+                    int nextAddress = storageAccessor.readInt();
                     currentPosition = nextAddress;
                 }
             }
@@ -108,25 +109,26 @@ public class PersistentHashTable {
 
     public void remove(int removeKey) throws IOException {
         int bucketNumber = removeKey % bucketCount;
-        storageAcessor.seek(bucketNumber * 4);
-        int bucketStartPos = storageAcessor.readInt();
+        storageAccessor.seek(bucketNumber * 4);
+        int bucketStartPos = storageAccessor.readInt();
 
         int currentPosition = bucketStartPos;
         int previousNodePos = bucketStartPos;
-        storageAcessor.seek(bucketStartPos + 8);
-        int nextNodePos = storageAcessor.readInt();
+        storageAccessor.seek(bucketStartPos + 8);
+        int nextNodePos = storageAccessor.readInt();
 
         for (int i = 0; i < 10; i++) {
-            storageAcessor.seek(currentPosition);
-            if (storageAcessor.readInt() == removeKey) {
-                storageAcessor.seek(previousNodePos + 8);
-                storageAcessor.writeInt(nextNodePos);
+            storageAccessor.seek(currentPosition);
+            if (storageAccessor.readInt() == removeKey) {
+                storageAccessor.seek(previousNodePos + 8);
+                storageAccessor.writeInt(nextNodePos);
+                break;
             } else {
-                storageAcessor.seek(currentPosition);
-                previousNodePos = (int) storageAcessor.length();
+                storageAccessor.seek(currentPosition);
+                previousNodePos = (int) storageAccessor.getFilePointer();
                 currentPosition = nextNodePos;
-                storageAcessor.seek(currentPosition + 8);
-                nextNodePos = storageAcessor.readInt();
+                storageAccessor.seek(currentPosition + 8);
+                nextNodePos = storageAccessor.readInt();
             }
         }
     }
@@ -158,27 +160,27 @@ public class PersistentHashTable {
         public boolean hasNext() {
             try {
                 int bucketNumber = key % bucketCount;
-                storageAcessor.seek(bucketNumber * 4);
-                int bucketStartAddr = storageAcessor.readInt();
+                storageAccessor.seek(bucketNumber * 4);
+                int bucketStartAddr = storageAccessor.readInt();
                 currentPos = bucketStartAddr;
 
 
                 for (int i = 0; i < 10; i++) {
-                    storageAcessor.seek(currentPos);
-                    if (storageAcessor.readInt() == key) {
-                        storageAcessor.seek(currentPos);
-                        key = storageAcessor.readInt();
-                        value = storageAcessor.readInt();
-                        nextAddress = storageAcessor.readInt();
+                    storageAccessor.seek(currentPos);
+                    if (storageAccessor.readInt() == key) {
+                        storageAccessor.seek(currentPos);
+                        key = storageAccessor.readInt();
+                        value = storageAccessor.readInt();
+                        nextAddress = storageAccessor.readInt();
                         break;
                     } else {
-                        storageAcessor.seek(currentPos + 8);
-                        if (storageAcessor.read() == -1) {
+                        storageAccessor.seek(currentPos + 8);
+                        if (storageAccessor.read() == -1) {
                             flag = false;
                             break;
                         } else {
-                            storageAcessor.seek(currentPos + 8);
-                            currentPos = storageAcessor.readInt();
+                            storageAccessor.seek(currentPos + 8);
+                            currentPos = storageAccessor.readInt();
                         }
                     }
                 }

@@ -1,8 +1,7 @@
-package pooja;
 /**
  * Created by parallels on 2/19/15.
  */
-
+package pooja;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;

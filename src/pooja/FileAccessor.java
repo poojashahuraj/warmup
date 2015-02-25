@@ -1,10 +1,9 @@
 package pooja;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class FileAccessor implements StorageAcessor {
+public class FileAccessor implements storageaccessor {
     private RandomAccessFile raf;
 
     public FileAccessor(File file) throws IOException {
@@ -34,6 +33,11 @@ public class FileAccessor implements StorageAcessor {
     @Override
     public int read() throws IOException {
         return raf.read();
+    }
+
+    @Override
+    public int getFilePointer() throws IOException {
+        return 0;
     }
 
     @Override

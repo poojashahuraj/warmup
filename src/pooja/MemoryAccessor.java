@@ -1,15 +1,13 @@
 package pooja;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class MemoryAccessor implements StorageAcessor {
+public class MemoryAccessor implements storageaccessor {
     private ByteBuffer byteBuffer;
     private long length;
 
-    // TODO: read about ByteBuffer
     public MemoryAccessor() {
-        byteBuffer = ByteBuffer.allocate(1024 * 1024);
+        byteBuffer = ByteBuffer.allocate(2048 * 2048);
         length = 0;
     }
 
@@ -37,6 +35,11 @@ public class MemoryAccessor implements StorageAcessor {
     @Override
     public int read() throws IOException {
         return byteBuffer.get();
+    }
+
+    @Override
+    public int getFilePointer() throws IOException {
+        return byteBuffer.position();
     }
 
     @Override
