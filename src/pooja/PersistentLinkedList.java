@@ -1,14 +1,19 @@
+package pooja;
 /**
  * Created by parallels on 2/19/15.
  */
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Iterator;
+
 public class PersistentLinkedList {
     private final RandomAccessFile raf;
+
     public PersistentLinkedList(RandomAccessFile file) {
         raf = file;
     }
+
     public void append(int value) throws IOException {
         if (raf.length() == 0) {
             raf.writeInt(value);
@@ -29,6 +34,7 @@ public class PersistentLinkedList {
             }
         }
     }
+
     public int getAddress(int index) throws IOException {
         int currentPosition = 0;
         for (int i = 0; i < raf.length(); i++) {
@@ -42,6 +48,7 @@ public class PersistentLinkedList {
         }
         throw new ArrayIndexOutOfBoundsException();
     }
+
     public int getValue(int index) throws IOException {
         int currentPosition = 0;
         for (int i = 0; i < raf.length(); i++) {
@@ -56,6 +63,7 @@ public class PersistentLinkedList {
         }
         throw new ArrayIndexOutOfBoundsException();
     }
+
     public int length() throws IOException {
         int currentPosition = 0;
         int numberOfNodes = 1;
@@ -71,6 +79,7 @@ public class PersistentLinkedList {
         }
         throw new ArrayIndexOutOfBoundsException();
     }
+
     public void remove(int index) throws IOException {
         int currentPosition = 4;
         for (int i = 0; i < raf.length(); i++) {
@@ -87,14 +96,17 @@ public class PersistentLinkedList {
             }
         }
     }
+
     public Iterator<Integer> iterator() throws IOException {
         LinkedList linkedList = new LinkedList();
         return linkedList;
     }
+
     private class LinkedList implements Iterator<Integer> {
         int currentPosition = 0;
         int offset, address, value = 0;
         boolean flag = false;
+
         @Override
         public boolean hasNext() {
             try {
@@ -114,6 +126,7 @@ public class PersistentLinkedList {
             }
             return flag;
         }
+
         @Override
         public Integer next() {
             return value;
