@@ -5,9 +5,9 @@ import java.util.Iterator;
 public class PersistentHashTable {
     private int bucketCount;
     private int endOfFileAddress;
-    private storageaccessor storageAccessor;
+    private StorageAcessor storageAccessor;
 
-    public PersistentHashTable(storageaccessor storageAccessor, int count) throws IOException {
+    public PersistentHashTable(StorageAcessor storageAccessor, int count) throws IOException {
         this.storageAccessor = storageAccessor;
         endOfFileAddress = count * 4;
         bucketCount = count;

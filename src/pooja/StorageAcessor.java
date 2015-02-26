@@ -17,4 +17,6 @@ interface StorageAcessor {
     int read() throws IOException;
 
     void close() throws IOException;
+
+    int getFilePointer() throws IOException;
 }

@@ -2,7 +2,7 @@ package pooja;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class MemoryAccessor implements storageaccessor {
+public class MemoryAccessor implements StorageAcessor {
     private ByteBuffer byteBuffer;
     private long length;
 
