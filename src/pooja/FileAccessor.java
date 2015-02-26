@@ -3,7 +3,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class FileAccessor implements StorageAcessor {
+public class FileAccessor implements StorageAccessor {
     private RandomAccessFile raf;
 
     public FileAccessor(File file) throws IOException {

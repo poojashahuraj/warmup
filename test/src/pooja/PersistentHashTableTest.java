@@ -13,7 +13,7 @@ import static org.junit.Assert.assertFalse;
  * Created by parallels on 2/23/15.
  */
 public class PersistentHashTableTest {
-    private StorageAcessor storageAccessor;
+    private StorageAccessor storageAccessor;
     @Test
     public void testDifferentBucketSizes() throws Exception {
         int bucketCount = 10;

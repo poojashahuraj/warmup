@@ -2,10 +2,7 @@ package pooja;
 
 import java.io.IOException;
 
-/**
- * Created by parallels on 2/18/15.
- */
-interface StorageAcessor {
+interface StorageAccessor {
     long length() throws IOException;
 
     void seek(int location) throws IOException;

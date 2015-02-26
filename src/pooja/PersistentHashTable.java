@@ -5,9 +5,9 @@ import java.util.Iterator;
 public class PersistentHashTable {
     private int bucketCount;
     private int endOfFileAddress;
-    private StorageAcessor storageAccessor;
+    private StorageAccessor storageAccessor;
 
-    public PersistentHashTable(StorageAcessor storageAccessor, int count) throws IOException {
+    public PersistentHashTable(StorageAccessor storageAccessor, int count) throws IOException {
         this.storageAccessor = storageAccessor;
         endOfFileAddress = count * 4;
         bucketCount = count;
@@ -125,7 +125,7 @@ public class PersistentHashTable {
                 break;
             } else {
                 storageAccessor.seek(currentPosition);
-                previousNodePos = (int) storageAccessor.getFilePointer();
+                previousNodePos = storageAccessor.getFilePointer();
                 currentPosition = nextNodePos;
                 storageAccessor.seek(currentPosition + 8);
                 nextNodePos = storageAccessor.readInt();
