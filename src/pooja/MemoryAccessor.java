@@ -43,6 +43,11 @@ public class MemoryAccessor implements StorageAccessor {
     }
 
     @Override
+    public String returnFilePath() {
+        return null;
+    }
+
+    @Override
     public void close() throws IOException {
 
     }

@@ -16,4 +16,6 @@ interface StorageAccessor {
     void close() throws IOException;
 
     int getFilePointer() throws IOException;
+
+    String returnFilePath();
 }

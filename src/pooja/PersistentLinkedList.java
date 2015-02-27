@@ -5,8 +5,8 @@ import java.util.Iterator;
 
 public class PersistentLinkedList {
     private final RandomAccessFile raf;
-
     public PersistentLinkedList(RandomAccessFile file) {
+
         raf = file;
     }
 
