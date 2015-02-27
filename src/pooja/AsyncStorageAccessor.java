@@ -49,4 +49,14 @@ public class AsyncStorageAccessor {
         });
         return cf;
     }
+
+    public CompletableFuture<Long> size() {
+        CompletableFuture<Long> cf = new CompletableFuture<>();
+        try {
+            cf.complete(channel.size());
+        } catch (IOException e) {
+            cf.completeExceptionally(e);
+        }
+        return cf;
+    }
 }

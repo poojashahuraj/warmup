@@ -1,97 +1,77 @@
 package pooja;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousFileChannel;
-import java.nio.channels.CompletionHandler;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class AsyncPersistentLinkedList {
-    AsynchronousFileChannel channel;
-    File file;
-    private StorageAccessor storageAccessor;
 
-    public AsyncPersistentLinkedList(StorageAccessor storageAccessor, File file) {
-        this.storageAccessor = storageAccessor;
-        this.file = file;
+    private AsyncStorageAccessor accessor;
+
+    public AsyncPersistentLinkedList(AsyncStorageAccessor accessor) {
+        this.accessor = accessor;
     }
 
-    public CompletableFuture<Void> append(int value) throws IOException, ExecutionException, InterruptedException {
-        channel = AsynchronousFileChannel.open(Paths.get(storageAccessor.returnFilePath()),
-                StandardOpenOption.WRITE);
-        long position = 0;
-        byte[] bytes = {};
-        bytes = new byte[]{(byte) value, (byte) -1};
-        if (file.length() == 0) {
-            position = 0;
-        } else {
-            int currentPosition = 8;
-            for (int i = 0; i < 10; i++) {
-                storageAccessor.seek(currentPosition);
-                if (storageAccessor.read() == -1) {
-                    position = currentPosition - 4;
-                } else {
-                    currentPosition = currentPosition + 8;
-                }
-            }
-        }
-        CompletableFuture cf = new CompletableFuture();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
-        channel.write(byteBuffer.wrap(bytes), position, null, new CompletionHandler<Integer, Object>() {
-            @Override
-            public void completed(Integer result, Object attachment) {
-                cf.complete(result);
-            }
-
-            @Override
-            public void failed(Throwable exc, Object attachment) {
-                System.out.println("failed to write");
-            }
-        });
-        return cf;
-    }
-
-    public CompletableFuture<Integer> get(int index) throws IOException {
-        Path path = FileSystems.getDefault().getPath("file");
-        channel = AsynchronousFileChannel.open(path,
-                StandardOpenOption.READ);
-        int position = 0;
-
-        for (int i = 0; i < file.length(); i++) {
-            storageAccessor.seek(position);
-            if (i == index) {
-                break;
+    public CompletableFuture<Void> append(int value) {
+        CompletableFuture<Integer> cf = accessor.size().thenCompose(fileSize -> {
+            if (fileSize == 0) {
+                ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+                byteBuffer.putInt(value);
+                byteBuffer.putInt(-1);
+                // Write first node
+                return accessor.write(byteBuffer, 0);
             } else {
-                position += 8;
-            }
-        }
+                // Get last node address
+                return lastNode(0).thenCompose(lastNodeAddress ->
+                        // Get file size (that will be our insertion point)
+                        accessor.size().thenCompose(insertedNodeAddress -> {
 
-        CompletableFuture cf = new CompletableFuture();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4);
-        channel.read(byteBuffer, position, null, new CompletionHandler<Integer, Object>() {
-            @Override
-            public void completed(Integer result, Object attachment) {
-                cf.complete(result);
-            }
+                            // Create a byte buffer for our new node
+                            ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+                            byteBuffer.putInt(value);
+                            byteBuffer.putInt(-1);
 
-            @Override
-            public void failed(Throwable exc, Object attachment) {
-                System.out.println("failed to read");
+                            // Insert our new node
+                            return accessor.write(byteBuffer, insertedNodeAddress).thenCompose(x -> {
+                                ByteBuffer buf = ByteBuffer.allocate(4);
+                                buf.putInt(insertedNodeAddress.intValue());
+
+                                // Update pointer of last node
+                                return accessor.write(byteBuffer, lastNodeAddress + 4);
+                            });
+                        }));
             }
         });
-        return cf;
+
+        // need to convert an integer to Void
+        return cf.thenApply(i -> null);
+
     }
 
-    public CompletableFuture<Integer> size() {
+    private CompletableFuture<Integer> lastNode(int startingPoint) {
+        ByteBuffer node = ByteBuffer.allocate(8);
+        return accessor.read(node, startingPoint).thenCompose(i -> {
+            int value = node.getInt();
+            int next = node.getInt();
+            if (next == -1) {
+                return CompletableFuture.completedFuture(startingPoint);
+            } else {
+                return lastNode(next);
+            }
+        });
+    }
 
+    public CompletableFuture<Integer> get(int n) {
         return null;
     }
 
-
+    public CompletableFuture<Long> length() {
+        CompletableFuture<Long> cf = accessor.size();
+        return cf.thenApply(fileSize -> {
+            if (fileSize == 0) {
+                return 0l;
+            } else {
+                return Long.MAX_VALUE;
+            }
+        });
+    }
 }

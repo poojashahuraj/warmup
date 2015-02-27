@@ -35,6 +35,8 @@ public class AsyncStorageAccessorTest {
         outputBuffer.get(outputBytes);
 
         assertArrayEquals(inputBytes, outputBytes);
+
+        assertEquals(42l, (long) accessor.size().get());
     }
 
 

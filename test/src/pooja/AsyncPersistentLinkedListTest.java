@@ -6,35 +6,36 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 
 public class AsyncPersistentLinkedListTest {
-    private StorageAccessor storageAccessor;
     private File file;
+    private AsyncStorageAccessor accessor;
 
     @Test
-    public void testAppendAndGet() throws IOException, ExecutionException, InterruptedException {
-        AsyncPersistentLinkedList asyncPersistentLinkedList = new AsyncPersistentLinkedList(storageAccessor, file);
-        for (int i = 0; i < 10; i++) {
-            asyncPersistentLinkedList.append(i * 2);
-            assertEquals(i * 2, asyncPersistentLinkedList.get(i));
+    public void testAppendAndGet() throws Exception {
+        AsyncPersistentLinkedList apll = new AsyncPersistentLinkedList(accessor);
+        assertEquals(0, (long) apll.length().get());
 
+        for (int i = 0; i < 10; i++) {
+            apll.append(i).get();
+            assertEquals(i, apll.get(i));
         }
+
+        assertEquals(10, (long) apll.length().get());
+
     }
 
     @Before
     public void setUp() throws Exception {
+        FileUtils.deleteQuietly(file);
         file = File.createTempFile("foo", "bar");
-        FileUtils.forceDelete(file);
-        storageAccessor = new FileAccessor(file);
-//        storageAccessor = new MemoryAccessor();
+        accessor = new AsyncStorageAccessor(file);
     }
 
     @After
     public void tearDown() throws Exception {
-        FileUtils.forceDelete(file);
+        FileUtils.deleteQuietly(file);
     }
 }
