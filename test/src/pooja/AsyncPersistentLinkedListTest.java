@@ -17,15 +17,18 @@ public class AsyncPersistentLinkedListTest {
     public void testAppendAndGet() throws Exception {
         AsyncPersistentLinkedList apll = new AsyncPersistentLinkedList(accessor);
         assertEquals(0, (long) apll.length().get());
+        int value = 0;
 
         for (int i = 0; i < 10; i++) {
-            apll.append(i).get();
-            assertEquals(i, apll.get(i));
+            apll.append(i);
         }
-
+        for (int i = 0; i < 10; i++) {
+            value = apll.getValue(i).get();
+            assertEquals(i + 10, value);
+        }
         assertEquals(10, (long) apll.length().get());
-
     }
+
 
     @Before
     public void setUp() throws Exception {

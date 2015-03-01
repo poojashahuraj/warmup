@@ -1,4 +1,5 @@
 package pooja;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -6,10 +7,12 @@ import java.io.RandomAccessFile;
 public class FileAccessor implements StorageAccessor {
     String filePath;
     private RandomAccessFile raf;
+
     public FileAccessor(File file) throws IOException {
         this.raf = new RandomAccessFile(file, "rwd");
         filePath = file.getPath();
     }
+
     @Override
     public long length() throws IOException {
         return raf.length();
