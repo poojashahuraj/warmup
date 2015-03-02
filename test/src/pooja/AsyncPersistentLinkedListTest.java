@@ -17,7 +17,7 @@ public class AsyncPersistentLinkedListTest {
         assertEquals(0, (long) apll.length().get());
         int value = 0;
         for (int i = 0; i < 10; i++) {
-            apll.append(i);
+            apll.append(i + 10).get();
         }
         for (int i = 0; i < 10; i++) {
             value = apll.getValue(i).get();
@@ -25,12 +25,14 @@ public class AsyncPersistentLinkedListTest {
         }
         assertEquals(10, (long) apll.length().get());
     }
+
     @Before
     public void setUp() throws Exception {
         FileUtils.deleteQuietly(file);
         file = File.createTempFile("foo", "bar");
         accessor = new AsyncStorageAccessor(file);
     }
+
     @After
     public void tearDown() throws Exception {
         FileUtils.deleteQuietly(file);

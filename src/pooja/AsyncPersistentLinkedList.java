@@ -1,43 +1,48 @@
 package pooja;
+
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.concurrent.CompletableFuture;
 public class AsyncPersistentLinkedList {
     private AsyncStorageAccessor accessor;
+
     public AsyncPersistentLinkedList(AsyncStorageAccessor accessor) {
         this.accessor = accessor;
     }
+
     public CompletableFuture<Integer> append(int value) {
         CompletableFuture<Integer> cf;
         cf = accessor.size().thenCompose(fileSize -> {
+            // If file size is zero, this is the first node
             if (fileSize == 0) {
-                int[] data = {value, -1};
-                ByteBuffer byteBuffer = ByteBuffer.allocate(data.length * 4);
-                IntBuffer intBuffer = byteBuffer.asIntBuffer();
-                intBuffer.put(data);
-                byte[] array = byteBuffer.array();
-                return accessor.write(ByteBuffer.wrap(array), 0l);
+                return accessor.write(makeNewNode(value), 0l);
             } else {
+                // Obtain address of last node
                 return lastNode(0).thenCompose(lastNodeAddress ->
+                        // Obtain file size, which will be our insertion point
                         accessor.size().thenCompose(insertedNodeAddress -> {
-                            int[] data = {value, -1};
-                            ByteBuffer byteBuffer = ByteBuffer.allocate(data.length * 4);
-                            IntBuffer intBuffer = byteBuffer.asIntBuffer();
-                            intBuffer.put(data);
-                            byte[] array = byteBuffer.array();
-                            return accessor.write(ByteBuffer.wrap(array), insertedNodeAddress).thenCompose(x -> {
-                                int[] data1 = {insertedNodeAddress.intValue()};
-                                ByteBuffer byteBuffer1 = ByteBuffer.allocate(data1.length * 4);
-                                IntBuffer intBuffer1 = byteBuffer1.asIntBuffer();
-                                intBuffer1.put(data1);
-                                byte[] array1 = byteBuffer.array();
-                                return accessor.write(ByteBuffer.wrap(array1), lastNodeAddress + 4);
+                            // Prepare last node
+                            ByteBuffer newNode = makeNewNode(value);
+                            return accessor.write(newNode, insertedNodeAddress).thenCompose(x -> {
+                                // update previous node pointer
+                                ByteBuffer previousNodeAddress = ByteBuffer.allocate(4);
+                                previousNodeAddress.putInt(insertedNodeAddress.intValue());
+                                previousNodeAddress.flip();
+                                return accessor.write(previousNodeAddress, lastNodeAddress + 4);
                             });
                         }));
             }
         });
         return cf;
     }
+
+    private ByteBuffer makeNewNode(int value) {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+        byteBuffer.putInt(value);
+        byteBuffer.putInt(-1);
+        byteBuffer.flip();
+        return byteBuffer;
+    }
+
     public CompletableFuture<Integer> getValue(int index) {
         CompletableFuture<Integer> cf = accessor.size().thenCompose(fileSize -> {
             int position = 0;
@@ -58,6 +63,7 @@ public class AsyncPersistentLinkedList {
         });
         return cf;
     }
+
     private CompletableFuture<Integer> lastNode(int startingPoint) {
         ByteBuffer node = ByteBuffer.allocate(8);
         return accessor.read(node, startingPoint).thenCompose(i -> {
@@ -71,6 +77,7 @@ public class AsyncPersistentLinkedList {
             }
         });
     }
+
     public CompletableFuture<Long> length() {
         CompletableFuture<Long> cf = accessor.size();
         return cf.thenApply(fileSize -> {
