@@ -22,10 +22,8 @@ public class AsyncStorageAccessorTest {
         new Random().nextBytes(inputBytes);
         ByteBuffer inputBuffer = ByteBuffer.wrap(inputBytes);
         System.out.println("pos " + inputBuffer.position() + " : " + inputBuffer.hasRemaining());
-
         CompletableFuture<Integer> writeResult = accessor.write(inputBuffer, 0l);
         assertEquals(bufSize, (long) writeResult.get());
-
         ByteBuffer outputBuffer = ByteBuffer.allocate(bufSize);
         CompletableFuture<Integer> readResult = accessor.read(outputBuffer, 0l);
         assertEquals(bufSize, (long) readResult.get());

@@ -1,16 +1,12 @@
 package pooja;
-
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.CompletableFuture;
-
 public class AsyncPersistentLinkedList {
     private AsyncStorageAccessor accessor;
-
     public AsyncPersistentLinkedList(AsyncStorageAccessor accessor) {
         this.accessor = accessor;
     }
-
     public CompletableFuture<Integer> append(int value) {
         CompletableFuture<Integer> cf;
         cf = accessor.size().thenCompose(fileSize -> {
@@ -20,7 +16,6 @@ public class AsyncPersistentLinkedList {
                 IntBuffer intBuffer = byteBuffer.asIntBuffer();
                 intBuffer.put(data);
                 byte[] array = byteBuffer.array();
-
                 return accessor.write(ByteBuffer.wrap(array), 0l);
             } else {
                 return lastNode(0).thenCompose(lastNodeAddress ->
@@ -30,9 +25,7 @@ public class AsyncPersistentLinkedList {
                             IntBuffer intBuffer = byteBuffer.asIntBuffer();
                             intBuffer.put(data);
                             byte[] array = byteBuffer.array();
-
                             return accessor.write(ByteBuffer.wrap(array), insertedNodeAddress).thenCompose(x -> {
-
                                 int[] data1 = {insertedNodeAddress.intValue()};
                                 ByteBuffer byteBuffer1 = ByteBuffer.allocate(data1.length * 4);
                                 IntBuffer intBuffer1 = byteBuffer1.asIntBuffer();
@@ -45,9 +38,7 @@ public class AsyncPersistentLinkedList {
         });
         return cf;
     }
-
     public CompletableFuture<Integer> getValue(int index) {
-
         CompletableFuture<Integer> cf = accessor.size().thenCompose(fileSize -> {
             int position = 0;
             for (int i = 0; i < fileSize; i++) {
@@ -67,7 +58,6 @@ public class AsyncPersistentLinkedList {
         });
         return cf;
     }
-
     private CompletableFuture<Integer> lastNode(int startingPoint) {
         ByteBuffer node = ByteBuffer.allocate(8);
         return accessor.read(node, startingPoint).thenCompose(i -> {
@@ -81,15 +71,13 @@ public class AsyncPersistentLinkedList {
             }
         });
     }
-
-
     public CompletableFuture<Long> length() {
         CompletableFuture<Long> cf = accessor.size();
         return cf.thenApply(fileSize -> {
             if (fileSize == 0) {
                 return 0l;
             } else {
-                return Long.MAX_VALUE;
+                return fileSize / 8;
             }
         });
     }
