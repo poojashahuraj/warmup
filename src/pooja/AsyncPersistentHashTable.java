@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 public class AsyncPersistentHashTable {
     private int BUCKET_COUNT;
     private AsyncStorageAccessor asyncStorageAccessor;
-
     public AsyncPersistentHashTable(AsyncStorageAccessor accessor, int bucketCount) throws ExecutionException, InterruptedException {
         asyncStorageAccessor = accessor;
         BUCKET_COUNT = bucketCount;
@@ -29,21 +28,6 @@ public class AsyncPersistentHashTable {
             asyncStorageAccessor.write(byteBuffer, position).get();
             position += 4;
         }
-    }
-
-    public CompletableFuture<Long> totalNumberOfNodes() {
-        CompletableFuture<Long> cf = asyncStorageAccessor.size();
-        return cf.thenApply(fileSize -> {
-            fileSize = fileSize - BUCKET_COUNT * 4;
-            if (fileSize == 0) {
-                return 0l;
-            } else {
-                for (int i = 0; i < BUCKET_COUNT; i++) {
-
-                }
-                return fileSize / 12;
-            }
-        });
     }
 
     public CompletableFuture<Integer> put(int key, int value) throws ExecutionException, InterruptedException {
@@ -82,12 +66,58 @@ public class AsyncPersistentHashTable {
         return cf;
     }
 
+    //given key this method returns value
+    public CompletableFuture<Integer> getValue(int key) throws ExecutionException, InterruptedException {
+        int value = traceNode(getBucketStartAddress(key), key).get();
+        return CompletableFuture.completedFuture(value);
+    }
+
+    public CompletableFuture<Integer> totalNumberOfNodes() throws ExecutionException, InterruptedException {
+        final int[] totalNumberOfNodes = {0};
+        CompletableFuture<Long> cf = asyncStorageAccessor.size();
+        cf.thenApply(fileSize -> {
+            fileSize = fileSize - BUCKET_COUNT * 4;
+            if (fileSize == 0) {
+                return 0l;
+            } else {
+                int n = 0;
+                for (int i = 0; i < BUCKET_COUNT; i++) {
+                    try {
+                        n = getBucketLength(i).get();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    totalNumberOfNodes[0] = totalNumberOfNodes[0] + n;
+                }
+                return totalNumberOfNodes[0];
+            }
+        });
+        return CompletableFuture.completedFuture(totalNumberOfNodes[0]);
+    }
+
+    //recursive function for calculating number of nodes
+    private CompletableFuture<Integer> numberOfNodes(int startingPoint, int numberOfNodes) {
+        final ByteBuffer node = ByteBuffer.allocate(12);
+        return asyncStorageAccessor.read(node, startingPoint).thenCompose(i -> {
+            node.flip();
+            node.position(8);
+            int readAAddress = node.getInt();
+            if (readAAddress == -1) {
+                return CompletableFuture.completedFuture(numberOfNodes);
+            } else {
+                return numberOfNodes(readAAddress, numberOfNodes + 1);
+            }
+        });
+    }
+
+    //recursive function to give the address of the last when provided the stating node address for one bucket
     private CompletableFuture<Integer> lastNode(int startingPoint) {
         ByteBuffer node = ByteBuffer.allocate(12);
         return asyncStorageAccessor.read(node, startingPoint).thenCompose(i -> {
             node.flip();
-            int key = node.getInt();
-            int value = node.getInt();
+            node.position(8);
             int nextAddress = node.getInt();
             if (nextAddress == -1) {
                 return CompletableFuture.completedFuture(startingPoint);
@@ -113,34 +143,15 @@ public class AsyncPersistentHashTable {
         });
     }
 
-    //recursive function for calculating number of nodes
-    private CompletableFuture<Integer> numberOfNodes(int startingPoint, int numberOfNodes) {
-        final ByteBuffer node = ByteBuffer.allocate(12);
-        return asyncStorageAccessor.read(node, startingPoint).thenCompose(i -> {
-            node.flip();
-            node.position(8);
-            int readAAddress = node.getInt();
-            if (readAAddress == -1) {
-                return CompletableFuture.completedFuture(numberOfNodes);
-            } else {
-                return numberOfNodes(readAAddress, numberOfNodes + 1);
-            }
-        });
-    }
 
-    //given key this method returns value
-    public CompletableFuture<Integer> getValue(int key) throws ExecutionException, InterruptedException {
-        int value = traceNode(getBucketStartAddress(key), key).get();
-        return CompletableFuture.completedFuture(value);
-    }
-
-
+    //get length of the bucket (number of nodes present in that linked list) when given the key
     public CompletableFuture<Integer> getBucketLength(int key) throws ExecutionException, InterruptedException {
         int bucketStartAddress = getBucketStartAddress(key);
         int numberOfNodes = numberOfNodes(bucketStartAddress, 1).get();
         return CompletableFuture.completedFuture(numberOfNodes);
     }
 
+    //method to create new node
     private ByteBuffer makeNewNode(int key, int value) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(12);
         byteBuffer.putInt(key);
@@ -150,6 +161,7 @@ public class AsyncPersistentHashTable {
         return byteBuffer;
     }
 
+    //when key is provided this method returns the starting address of the bucket
     public int getBucketStartAddress(int key) throws ExecutionException, InterruptedException {
         int bucketNumber = key % BUCKET_COUNT;
         int start = bucketNumber * 4;
@@ -159,5 +171,4 @@ public class AsyncPersistentHashTable {
         int bucketStartAddress = buffer.getInt();
         return bucketStartAddress;
     }
-
 }

@@ -50,7 +50,7 @@ public class AsyncPersistentHashTableTest {
     }
 
     @Test
-    public void testLength() throws Exception {
+    public void testBucketLength() throws Exception {
         AsyncPersistentHashTable apht = new AsyncPersistentHashTable(asyncStorageAccessor, BUCKET_COUNT);
         //populate
         assertEquals(0, (long) apht.totalNumberOfNodes().get());
@@ -63,6 +63,7 @@ public class AsyncPersistentHashTableTest {
             numberOfNodes = apht.getBucketLength(i).get();
             assertEquals(8, numberOfNodes);
         }
+        assertEquals(40, (long) apht.totalNumberOfNodes().get());
     }
     @Before
     public void setUp() throws Exception {

@@ -24,7 +24,6 @@ public class PersistentHashTableTest {
         }
         assertEquals(20, pht.size());
     }
-
     @Test
     public void testReopen() throws Exception {
         PersistentHashTable pht = populate(10, 5);
@@ -33,7 +32,6 @@ public class PersistentHashTableTest {
         pht = new PersistentHashTable(storageAccessor, 5);
         assertEquals(10, pht.size());
     }
-
     @Test
     public void testPutAndGet() throws Exception {
         PersistentHashTable pht = populate(50, 5);
@@ -42,7 +40,6 @@ public class PersistentHashTableTest {
             assertEquals(i * 11, pht.get(i));
         }
     }
-
     @Test
     public void testLength() throws Exception {
         PersistentHashTable pht = populate(40, 5);
@@ -50,7 +47,6 @@ public class PersistentHashTableTest {
             assertEquals(8, pht.getBucketLength(i));
         }
     }
-
     @Test //
     public void testDelete() throws Exception {
         PersistentHashTable pht = populate(40, 5);
