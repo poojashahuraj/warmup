@@ -6,33 +6,46 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 
 /**
  * Created by parallels on 3/2/15.
  */
+
 public class AsyncPersistentHashTableTest {
     private File file;
     private AsyncStorageAccessor asyncStorageAccessor;
     private int BUCKET_COUNT = 5;
 
     @Test
-    public void testPutAndGet() throws Exception {
+    public void testBucketEmpty() throws ExecutionException, InterruptedException {
         AsyncPersistentHashTable apht = new AsyncPersistentHashTable(asyncStorageAccessor, BUCKET_COUNT);
-        assertEquals(0, (long) apht.length().get());
-        populate(10, 5);
-        for (int i = 0; i < 10; i++) {
-            assertEquals(i + 10, apht.getValue(i));
+        int val = 0;
+        int position = 0;
+        for (int i = 0; i < BUCKET_COUNT; i++) {
+            ByteBuffer buffer = ByteBuffer.allocate(4);
+            asyncStorageAccessor.read(buffer, position).get();
+            buffer.flip();
+            val = buffer.getInt();
+            assertEquals(-1, val);
+            position += 4;
         }
-        assertEquals(10, (long) apht.length().get());
     }
 
-    public void populate(int howMany, int bucketCount) throws Exception {
-        AsyncPersistentHashTable apht = new AsyncPersistentHashTable(asyncStorageAccessor, bucketCount);
-        for (int i = 0; i < howMany; i++) {
+    @Test
+    public void testPutAndGet() throws Exception {
+        AsyncPersistentHashTable apht = new AsyncPersistentHashTable(asyncStorageAccessor, BUCKET_COUNT);
+        assertEquals(0, (long) apht.totalNumberOfNodes().get());
+        int val = 0;
+        for (int i = 0; i < 10; i++) {
             apht.put(i, i + 10).get();
+            val = apht.getValue(i).get();
+            assertEquals(i + 10, val);
         }
+        assertEquals(10, (long) apht.totalNumberOfNodes().get());
     }
 
     @Before

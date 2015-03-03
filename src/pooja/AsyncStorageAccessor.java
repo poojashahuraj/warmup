@@ -8,8 +8,10 @@ import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletableFuture;
 public class AsyncStorageAccessor {
     private final AsynchronousFileChannel channel;
+    private File file;
     public AsyncStorageAccessor(File file) throws IOException {
         channel = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        this.file = file;
     }
     public CompletableFuture<Integer> write(ByteBuffer buffer, long position) {
         CompletableFuture<Integer> cf = new CompletableFuture<>();
