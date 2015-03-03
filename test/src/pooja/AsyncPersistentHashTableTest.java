@@ -39,6 +39,7 @@ public class AsyncPersistentHashTableTest {
     public void testPutAndGet() throws Exception {
         AsyncPersistentHashTable apht = new AsyncPersistentHashTable(asyncStorageAccessor, BUCKET_COUNT);
         assertEquals(0, (long) apht.totalNumberOfNodes().get());
+
         int val = 0;
         for (int i = 0; i < 10; i++) {
             apht.put(i, i + 10).get();
@@ -48,6 +49,21 @@ public class AsyncPersistentHashTableTest {
         assertEquals(10, (long) apht.totalNumberOfNodes().get());
     }
 
+    @Test
+    public void testLength() throws Exception {
+        AsyncPersistentHashTable apht = new AsyncPersistentHashTable(asyncStorageAccessor, BUCKET_COUNT);
+        //populate
+        assertEquals(0, (long) apht.totalNumberOfNodes().get());
+        for (int i = 0; i < 40; i++) {
+            apht.put(i, i + 10).get();
+        }
+
+        int numberOfNodes = 0;
+        for (int i = 0; i < BUCKET_COUNT; i++) {
+            numberOfNodes = apht.getBucketLength(i).get();
+            assertEquals(8, numberOfNodes);
+        }
+    }
     @Before
     public void setUp() throws Exception {
         FileUtils.deleteQuietly(file);

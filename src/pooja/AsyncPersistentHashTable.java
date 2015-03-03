@@ -38,19 +38,17 @@ public class AsyncPersistentHashTable {
             if (fileSize == 0) {
                 return 0l;
             } else {
+                for (int i = 0; i < BUCKET_COUNT; i++) {
+
+                }
                 return fileSize / 12;
             }
         });
     }
 
     public CompletableFuture<Integer> put(int key, int value) throws ExecutionException, InterruptedException {
+        int bucketStartPosition = getBucketStartAddress(key);
         int bucketNumber = key % BUCKET_COUNT;
-        int position = bucketNumber * 4;
-        ByteBuffer buffer = ByteBuffer.allocate(4);
-        asyncStorageAccessor.read(buffer, position).get();
-        buffer.flip();
-        int bucketStartPosition = buffer.getInt();
-
         CompletableFuture<Integer> cf = asyncStorageAccessor.size().thenCompose(endOfFileAddress -> {
             // If bucket is empty , this is the first node in that bucket
             if (bucketStartPosition == -1) {
@@ -60,6 +58,7 @@ public class AsyncPersistentHashTable {
                     ByteBuffer byteBuffer = ByteBuffer.allocate(4);
                     byteBuffer.putInt(endOfFileAddress.intValue());
                     byteBuffer.flip();
+
                     return asyncStorageAccessor.write(byteBuffer, bucketNumber * 4);
                 });
             } else {
@@ -71,7 +70,7 @@ public class AsyncPersistentHashTable {
                     ByteBuffer newNode = makeNewNode(key, value);
                     return asyncStorageAccessor.write(newNode, endOfFileAddress).thenCompose(x -> {
 
-                        //update the address of the previous node in the bukcet
+                        //update the address of the previous node in the bucket
                         ByteBuffer buffer1 = ByteBuffer.allocate(4);
                         buffer1.putInt(endOfFileAddress.intValue());
                         buffer1.flip();
@@ -114,16 +113,32 @@ public class AsyncPersistentHashTable {
         });
     }
 
+    //recursive function for calculating number of nodes
+    private CompletableFuture<Integer> numberOfNodes(int startingPoint, int numberOfNodes) {
+        final ByteBuffer node = ByteBuffer.allocate(12);
+        return asyncStorageAccessor.read(node, startingPoint).thenCompose(i -> {
+            node.flip();
+            node.position(8);
+            int readAAddress = node.getInt();
+            if (readAAddress == -1) {
+                return CompletableFuture.completedFuture(numberOfNodes);
+            } else {
+                return numberOfNodes(readAAddress, numberOfNodes + 1);
+            }
+        });
+    }
+
     //given key this method returns value
-    CompletableFuture<Integer> getValue(int key) throws ExecutionException, InterruptedException {
-        int bucketNumber = key % BUCKET_COUNT;
-        int bucketStartAddress = bucketNumber * 4;
-        ByteBuffer buffer = ByteBuffer.allocate(4);
-        asyncStorageAccessor.read(buffer, bucketStartAddress).get();
-        buffer.flip();
-        int cf = buffer.getInt();
-        int value = traceNode(cf, key).get();
+    public CompletableFuture<Integer> getValue(int key) throws ExecutionException, InterruptedException {
+        int value = traceNode(getBucketStartAddress(key), key).get();
         return CompletableFuture.completedFuture(value);
+    }
+
+
+    public CompletableFuture<Integer> getBucketLength(int key) throws ExecutionException, InterruptedException {
+        int bucketStartAddress = getBucketStartAddress(key);
+        int numberOfNodes = numberOfNodes(bucketStartAddress, 1).get();
+        return CompletableFuture.completedFuture(numberOfNodes);
     }
 
     private ByteBuffer makeNewNode(int key, int value) {
@@ -134,4 +149,15 @@ public class AsyncPersistentHashTable {
         byteBuffer.flip();
         return byteBuffer;
     }
+
+    public int getBucketStartAddress(int key) throws ExecutionException, InterruptedException {
+        int bucketNumber = key % BUCKET_COUNT;
+        int start = bucketNumber * 4;
+        ByteBuffer buffer = ByteBuffer.allocate(4);
+        asyncStorageAccessor.read(buffer, start).get();
+        buffer.flip();
+        int bucketStartAddress = buffer.getInt();
+        return bucketStartAddress;
+    }
+
 }
