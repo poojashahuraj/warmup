@@ -14,7 +14,6 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by parallels on 3/2/15.
  */
-
 public class AsyncPersistentHashTableTest {
     private File file;
     private AsyncStorageAccessor asyncStorageAccessor;
@@ -57,7 +56,6 @@ public class AsyncPersistentHashTableTest {
         for (int i = 0; i < 40; i++) {
             apht.put(i, i + 10).get();
         }
-
         int numberOfNodes = 0;
         for (int i = 0; i < BUCKET_COUNT; i++) {
             numberOfNodes = apht.getBucketLength(i).get();
@@ -65,6 +63,7 @@ public class AsyncPersistentHashTableTest {
         }
         assertEquals(40, (long) apht.totalNumberOfNodes().get());
     }
+
     @Before
     public void setUp() throws Exception {
         FileUtils.deleteQuietly(file);
