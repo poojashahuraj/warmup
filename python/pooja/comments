@@ -1,0 +1,33 @@
+def __init__():
+        print("hello ");
+
+        # This method creates a connection so that we can interact with the server
+        connection = boto.connect_s3(aws_access_key_id="admin",
+                             aws_secret_access_key="f8e9b6dad5180397d506e4a8bbc7e1f33dbcc3ca7cef15030741b3dcfa326d3e559b220f80106a3e49df7076498ca20557f57f8cf2b90a73c9cbfcc887a8eb2b",
+                             host="us-east.formationds.com",
+                             port=8443, is_secure=1,  # no need of this paramaeter if we are using ssl
+                             calling_format=boto.s3.connection.OrdinaryCallingFormat())
+
+    # this line is creating a bucket named acldemo Buckets must have a globally unique name not just unique to our account
+        connection.create_bucket("acldemo")
+
+    # this gets the bucket named acldemo and stoes in a variable bucket ACL is access control list
+        bucket1 = connection.get_bucket('acldemo')
+
+    # this creates a file panda with the string "hello world"
+        key = bucket1.new_key('panda')
+        key.set_contents_from_string('hello,world')
+
+    #this for loop will print the buckets we own with the bucket name and the creation date of the bucket
+        for bucket in connection.get_all_buckets():
+            print "{name}\t{created}".format(
+                name=bucket.name,
+                created=bucket.creation_date,
+            )
+
+    #this will get us list of objects in the bucket and will also print out cd each object name file size and last modified date
+        for key in bucket1.list():
+            print "{name}\t{size}".format(
+                name=key.name,
+                size=key.size,
+            )
