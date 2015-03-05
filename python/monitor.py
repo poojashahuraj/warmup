@@ -70,7 +70,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-    # exit 0
-    # if anything goes wrong, exit 42
