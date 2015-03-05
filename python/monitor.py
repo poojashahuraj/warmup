@@ -1,6 +1,9 @@
-__author__ = 'parallels'
+#!/usr/bin/python
+
 import requests
 import boto
+import os
+from subprocess import call
 from boto.s3.connection import OrdinaryCallingFormat
 from boto.s3.key import Key
 
@@ -11,10 +14,22 @@ def get_user_token(user, password, host, port, secure):
     else:
         proto = 'http'
     url = '%s://%s:%d/api/auth/token?login=%s&password=%s' % (proto, host, port, user, password)
-    print("Getting credentials from: ", url)
     r = requests.get(url, verify=False)
     rjson = r.json()
     return rjson['token']
+
+
+def putGetOneObject(blobName, blockCount, bucket):
+    devNull = open(os.devnull, 'w')
+    call(["rm", "-f", ("/tmp/%s" % blobName)], stdin=devNull, stdout=devNull, stderr=devNull)
+    call(["dd", "if=/dev/urandom", ("of=/tmp/%s" % blobName), "bs=4096", ("count=%s" % blockCount)],  stdin=devNull, stdout=devNull, stderr=devNull)
+    key = bucket.new_key(blobName)
+    key.set_metadata("some_metadata", "some_value")
+    key.set_contents_from_filename("/tmp/%s" % blobName)
+    call(["rm", "-f", ("/tmp/%s" % blobName)])
+    key = bucket.get_key(blobName)
+    assertTrue("Metadata not saved correctly", key.metadata['some_metadata'] == 'some_value')
+    assertTrue("Wrong size for object", key.size == (blockCount * 4096))
 
 
 def execute(user_token, host, port, secure):
@@ -24,50 +39,34 @@ def execute(user_token, host, port, secure):
                                  port=port,
                                  is_secure=secure,
                                  calling_format=boto.s3.connection.OrdinaryCallingFormat())
-    # pick a bucket name ("canary") hello
-    # create bucket if it doesn't exist
     bucket_name = 'canary'
-    bucket1 = connection.create_bucket(bucket_name)
 
-    bucket = connection.get_bucket(bucket_name)
-    if bucket:
-        print('Bucket (%s) already exists' % bucket_name)
-        # clean up contents of buckets
-        for key in bucket.list():
-            bucket.delete_key(key)
-            print ("key %s deleted "%key)
-        connection.delete_bucket(bucket_name)
+    for bucket in connection.get_all_buckets():
+        if bucket.name == bucket_name:
+            for key in bucket.list():
+                bucket.delete_key(key)
+            connection.delete_bucket(bucket_name)
 
-    # PUT a small object
     bucket = connection.create_bucket(bucket_name)
-    key = bucket.new_key("hello.txt")
-    key.set_metadata("Content-Type", "txt")
-    key.set_contents_from_string("hello world !")
 
-    # GET the object, make sure size and metadata match
-    for key in bucket.list():
-        print "{name}\t{size}\t{modified}".format(
-            name = key.name,
-            size = key.size,
-            modified = key.last_modified,
-            )
-
-    # PUT a larger object
-    keyLarge = bucket.new_key("largeKey.txt")
-    keyLarge.set_contents_from_filename('/home/parallels/test.txt')
-    # GET the object, make sure size and metadata match
+    putGetOneObject("smallBlob", 1, bucket)
+    putGetOneObject("largeBlob", 1000, bucket)
 
 
-
+def assertTrue(message, condition):
+    if not condition:
+        print message
+        exit(-1)
 
 def main():
     user = "admin"
-    password = "formation1234"
-    host = "us-east.formationds.com"
-    omPort = 7443
-    secure = "true"
+    password = "admin"
+    host = "localhost"
+    omPort = 7777
+    s3Port = 8000
+    secure = False
     user_token = get_user_token(user, password, host, omPort, secure)
-    execute(user_token, "us-east.formationds.com", 8443, 1)
+    execute(user_token, host, s3Port, secure)
 
 if __name__ == '__main__':
     main()
