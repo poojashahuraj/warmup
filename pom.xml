@@ -57,11 +57,40 @@
             <artifactId>netty-all</artifactId>
             <version>5.0.0.Alpha1</version>
         </dependency>
+
+       <!-- hbase dependency start-->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- hbase dependency end-->
     </dependencies>
 
     <build>
         <sourceDirectory>./src/</sourceDirectory>
         <testSourceDirectory>./test/src/</testSourceDirectory>
+        <resources>
+            <resource>
+                <directory>/home/parallels/tmp/hbase-1.0.0/conf</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>hbase-site.xml</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
